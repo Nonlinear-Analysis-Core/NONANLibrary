@@ -1,15 +1,16 @@
 import numpy as np
-import scipy as sp
+from scipy import stats
+from typing import Union
 
-def AMI_Thomas20210405(x,L):
+def AMI_Thomas(x : np.ndarray, L : Union[int,np.ndarray,list]) -> Union[np.ndarray,float]:
     """
-    Usage: (tau,ami)=AMI_Thomas20210405(x,L)
+    Usage: (tau,ami)=AMI_Thomas(x,L)
     inputs:    x - time series, vertically orientedtrc files selected by user
                L - Maximum lag to calculate AMI until
     outputs:   tau - first true minimum of the AMI vs lag plot
                AMI - a vertically oriented vector containing values of AMI
                from a lag of 0 up the input L
-    [ami]=AMI_Thomas20210405(x,y)
+    [ami]=AMI_Thomas(x,y)
     inputs:   - x, single column array with the same length as y
               - y, single column array with the same length as x
     outputs   - ami, the average mutual information between the two arrays
@@ -77,51 +78,55 @@ def AMI_Thomas20210405(x,L):
     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     """
-    if not isinstance(x, np.ndarray):
-        x = np.array(x)
-    # check size of input x
-    (m,n) = np.shape(x)
+    if isinstance(L, int):
+        if not isinstance(x, np.ndarray):
+            x = np.array(x,ndmin=2)
+        elif x.ndim == 1:
+            x = np.array(x,ndmin=2)
 
-    if m > 1 and n > 1:
-        raise ValueError('Input vector is not one dimensional.')
+        # check size of input x
+        (m,n) = np.shape(x)
 
-    # calculate AMI at each lag
-    ami = np.zeros((L,2))
-    # fprintf('AMI: 00#')
-    for i in range(L):
-        ami[i,0] = i
-        X = x[1:-1-i] # NOTE: Might be off by one.
-        Y = x[i+1:]
-        # NOTE: This takes it in as stacked rows, MATLAB assumes columns.
-        ami[i,1] = average_mutual_information(np.vstack((X,Y)))
+        if m > 1 and n > 1:
+            raise ValueError('Input vector is not one dimensional.')
 
-    tau = np.array([])
-    #NOTE: Might be shape[1]
-    for i in range(1,ami.shape[0]-1):
-        if ami[i-1,1] >= ami[i,1] and ami[i,1] <= ami[i+1,1]:
-            #NOTE: Axis might be wrong.
-            tau = np.append(tau, ami[i,:])
-    #NOTE: Testing new function that I've never used here, might be issues.
-    ind = np.argmax(ami[:,1]<=(0.2*ami[0,1]))
-    #NOTE: np.argmax returns a 0 if not found.
-    if ind == 0:
-        tau = np.append(tau, ami[ind,:])
-    
-    return (tau,ami)
-    #TODO: Commenting this out, will work on later (4/28/2021), for the case that the input are two different column vectors
-    # elseif nargin==2 && numel(varargin{1})>1 && numel(varargin{2})>1
-        
-    #     x = varargin{1}
-    #     y = varargin{2}
-    #     
-    #     if numel(x)~=numel(y)
-    #         error('x and y must be the same size')
-    #     end
-    #     ami=average_mutual_information([x,y])       
-    #     varargout{1}=ami  
-    # end
+        # calculate AMI at each lag
+        ami = np.zeros((L,2))
+        for i in range(L):
+            ami[i,0] = i+1
+            X = x[0,:-i-1] if i != 0 else x[0,0:-1]
+            Y = x[0,i+1:] if i != 0 else x[0,1:]
+            ami[i,1] = average_mutual_information(np.vstack((X,Y)))
 
-def average_mutual_information(data):
+        tau = np.array([])
+        row = 1 # to keep shape consistent.
+        for i in range(1,ami.shape[0]-1):
+            if ami[i-1,1] >= ami[i,1] and ami[i,1] <= ami[i+1,1]:
+                #NOTE: Axis might be wrong.
+                tau = np.append(tau, ami[i,:]).reshape(row,2)
+                row += 1
+        ind = np.argmax(ami[:,1]<=(0.2*ami[0,1]))
+        if ind != 0:    # argmax returns 0 if not found.
+            tau = np.append(tau, ami[ind,:]).reshape(row,2)
+        return (tau,ami)
+    elif isinstance(L, np.ndarray) or isinstance(L, list): 
+        if not isinstance(x, np.ndarray):
+            x = np.array(x,ndmin=2)
+        elif x.ndim == 1:
+            x = np.array(x,ndmin=2)
+        y = L   # Because L is not a maximal lag, but it is another time series entirely.
+
+        if not isinstance(y, np.ndarray):
+            y = np.array(y,ndmin=2)
+        elif x.ndim == 1:
+            y = np.array(y,ndmin=2)
+
+        if len(y) != len(x):
+            raise ValueError('x and y must have the same length.')   
+
+        return average_mutual_information(np.vstack((x,y))) 
+
+def average_mutual_information(data : np.ndarray) -> float:
     """
     Usage: AMI = average_mutual_information(data) 
     Calculates average mutual information between 
@@ -136,10 +141,9 @@ def average_mutual_information(data):
     
     Output is a scalar.
     """
-    # NOTE: Might be shape[0]
     n = data.shape[1]
-    X = data[:,0]
-    Y = data[:,1]
+    X = data[0,:]
+    Y = data[1,:]
     # Example below is for normal reference rule in 
     # 2 dims, Scott (1992).
     hx = np.std(X)/(n**(1/6))
@@ -152,7 +156,7 @@ def average_mutual_information(data):
     AMI = np.sum(np.log2(np.divide(JointP_xy,np.multiply(P_x,P_y))))/n
     return AMI
 
-def univariate_kernel_density(value, data, window):
+def univariate_kernel_density(value : np.ndarray, data : np.ndarray, window : float) -> np.ndarray:
     """
     Usage:  y = univariate_kernel_density(value, data, window) 
     Estimates univariate density using kernel 
@@ -170,14 +174,14 @@ def univariate_kernel_density(value, data, window):
     # of a double-sum. 
     prob = np.zeros((n,m))
 
-    G = extended(value, n) 
-    H = extended(data.T.copy(), m) 
-    prob = sp.stats.norm.pdf((G-H)/h)
-    fhat = np.sum(prob)/(n*h) 
+    G = extended(value, n, True) 
+    H = extended(data, m, False) 
+    prob = stats.norm.pdf((G-H)/h)
+    fhat = np.sum(prob,axis=0)/(n*h) 
     y = fhat
     return y
 
-def bivariate_kernel_density(value, data, Hone, Htwo):
+def bivariate_kernel_density(value : np.ndarray, data : np.ndarray, Hone : float, Htwo : float) -> np.ndarray:
     """
     Usage: y = bivariate_kernel_density(value, data, Hone, Htwo) 
     Calculates bivariate kernel density estimates 
@@ -187,30 +191,26 @@ def bivariate_kernel_density(value, data, Hone, Htwo):
                 - Hone (scalar) and Htwo (scalar) to use for the widths of density estimation. 
     Output is an m-vector of probabilities estimated at the values in ’value’. 
     """
-    s = np.size(data)
-    n = s[0]
-    t = np.size(value) 
-    number_pts = t[0] 
+    s = np.shape(data)
+    n = s[1]
+    t = np.shape(value) 
+    number_pts = t[1] 
     rho_matrix = np.corrcoef(data)
     rho = rho_matrix[0,1]
     # The adjusted covariance matrix: 
-    W = np.array([Hone**2,rho*Hone*Htwo,rho*Hone*Htwo,Htwo**2])
+    W = np.array([Hone**2,rho*Hone*Htwo,rho*Hone*Htwo,Htwo**2]).reshape((2,2))
     differences = linear_depth(value,np.negative(data))
-
-    prob = sp.stats.multivariate_normal(differences,mean=[0,0],cov=W) #  mu := [0,0], covariance := W
+    prob = stats.multivariate_normal.pdf(differences,cov=W)
     cumprob = np.cumsum(prob)
-    # NOTE: Next two lines may be incorrect.
-    y = np.array([])
-    y = np.append(y, (1/n)*cumprob[n])
-    # NOTE: Not sure why i = i + 1 is included in all of these loops.
+    y = np.zeros(number_pts)
+    y[0] = (1/n)*cumprob[n-1]
     for i in range(1,number_pts):
-        index = n*i 
-        y[i] = (1/(n))*(cumprob[index]-cumprob[index-n])
-        i = i + 1 
+        index = n*(i+1) 
+        y[i] = (1/n)*(cumprob[index]-cumprob[index-n-1]) if index != len(cumprob) else (1/n)*(cumprob[index-1]-cumprob[index-n-1])
     y = y.T.copy()
     return y
 
-def linear_depth(feet, toes):
+def linear_depth(feet : np.ndarray, toes : np.ndarray) -> np.ndarray:
     """
     linear_depth takes a matrix ‘feet’ and lengthens 
     it in blocks, takes a matrix ‘toes’ and lengthens 
@@ -219,21 +219,19 @@ def linear_depth(feet, toes):
     all sum combinations of their rows. 
     feet and toes have the same number of columns 
     """
-    if feet.shape[1] == toes.shape[1]:
-        a = feet.shape[0]
-        b = toes.shape[0]
-
-        blocks = np.zeros((a*b, toes.shape[1]))
-        bricks = blocks 
+    if feet.shape[0] == toes.shape[0]:
+        a = feet.shape[1]
+        b = toes.shape[1]
+        blocks = np.zeros((a*b, toes.shape[0]))
+        toes = toes.T.copy()
+        bricks = blocks.copy()
         for i in range(a):
-            blocks[i*b: i*b+1,:] = extended(feet[i,:],b) 
-            bricks[i*b: i*b+1,:] = toes 
-            i = i + 1 
-
+            blocks[i*b: (i+1)*b,:] = np.tile(feet[:,i],b).reshape(-1,2)
+            bricks[i*b: (i+1)*b,:] = toes
     y = blocks + bricks 
     return y
 
-def extended(vector, n):
+def extended(vector : np.ndarray, n : int, vertical : bool) -> np.ndarray:
     """
     Takes an m-dimensional row vector and outputs an 
     n-by-m matrix with n-many consecutive repeats of 
@@ -242,16 +240,10 @@ def extended(vector, n):
     m-by-n matrix. 
     Else, it returns the original input. 
     """
-    M = vector 
-    if vector.shape[0] == 1:
-        M = np.zeros((n,len(vector)))
-        for i in range(n):
-            M[i,:] = vector
-
-    if vector.shape[1] == 1:
-        M = np.zeros((len(vector),n))
-        for i in range(n):
+    M = np.zeros((len(vector),n))
+    for i in range(n):
+        if vertical:
             M[:,i] = vector
-
-    y = M
-    return y
+        else: # if horizontal
+            M[i,:] = vector
+    return M # where M previously was y.

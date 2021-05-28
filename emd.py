@@ -268,7 +268,7 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
         else:
             lmax = np.flipud(indmax[:min(indmax[-1],nbsym)]).flatten()
             lmin = np.array([np.flipud(indmin[:min(indmin[-1],nbsym-1)]),1])
-            lsym = 1
+            lsym = 0
     else:
         if x[0] < x[indmax[0]]:
             lmax = np.flipud(indmax[:min(indmax[-1],nbsym)]).flatten()
@@ -277,25 +277,25 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
         else:
             lmax = np.array([np.flipud(indmax[:min(indmax[-1],nbsym-1)]),1])
             lmin = np.flipud(indmin[:min(indmin[-1],nbsym)]).flatten()
-            lsym = 1
+            lsym = 0
     
     if indmax[-1] < indmin[-1]:
         if x[-1] < x[indmax[-1]]:
-            rmax = np.flipud(indmax[-1-nbsym+1:]) if indmax.size > nbsym+1 else indmax[0]
-            rmin = np.flipud(indmin[-1-nbsym:-1]) if indmin.size > nbsym   else indmin[0]
+            rmax = np.flipud(indmax[-1-nbsym+1:]) if indmax.size >= nbsym+1 else np.flipud(indmax[:])
+            rmin = np.flipud(indmin[-1-nbsym:-1]) if indmin.size >= nbsym   else np.flipud(indmin[:])
             rsym = indmin[-1]
         else:
-            rmax = np.concatenate((np.array([lx]), np.flipud(indmax[-1-nbsym+2:]))) if indmax.size > nbsym+2 else np.concatenate((np.array([lx]),indmax[0]))
-            rmin = np.flipud(indmin[-1-nbsym+1:]) if indmin.size > nbsym+1 else indmin[0]
+            rmax = np.concatenate((np.array([lx]), np.flipud(indmax[-1-nbsym+2:]))) if indmax.size >= nbsym+2 else np.concatenate((np.array([lx]),indmax[:]))
+            rmin = np.flipud(indmin[-1-nbsym+1:]) if indmin.size >= nbsym+1 else np.flipud(indmin[:])
             rsym = lx
     else:
         if x[-1] > x[indmin[-1]]:
-            rmax = np.flipud(indmax[-1-nbsym:-1]) if indmax.size > nbsym else indmax[0]
-            rmin = np.flipud(indmin[-1-nbsym+1:]) if indmax.size > nbsym+1 else indmin[0]
+            rmax = np.flipud(indmax[-1-nbsym:-1]) if indmax.size >= nbsym else np.flipud(indmax[:])
+            rmin = np.flipud(indmin[-1-nbsym+1:]) if indmax.size >= nbsym+1 else np.flipud(indmin[:])
             rsym = indmax[-1]
         else:
-            rmax = np.flipud(indmax[-1-nbsym+1]) if indmax.size > nbsym+1 else indmax[0]
-            rmin = np.concatenate((np.array([lx]), np.flipud(indmin[-1-nbsym+2:]))) if indmax.size > nbsym+2 else np.concatenate((np.array([lx]),indmin[0]))
+            rmax = np.flipud(indmax[-1-nbsym+1:]) if indmax.size >= nbsym+1 else np.flipud(indmax[:])
+            rmin = np.concatenate((np.array([lx]), np.flipud(indmin[-1-nbsym+2:]))) if indmax.size >= nbsym+2 else np.concatenate((np.array([lx]),indmin[:]))
             rsym = lx
     
     tlmin = 2*t[lsym]-t[lmin]
@@ -388,7 +388,7 @@ def emd(*args : Any, nargout : int = 1): # NOTE: Returns (imf, ort, nbits)
 
 
     # # sifting loop
-        while not stop_sift and nbit<MAXITERATIONS:             # NOTE: Very complex boolean expression, might be better to be deconstructed a little bit.
+        while not stop_sift and nbit<MAXITERATIONS:           
             #NOTE: Check output formatting, when getting to this section of the code.
             if not MODE_COMPLEX and nbit>MAXITERATIONS/5 and nbit % np.floor(MAXITERATIONS/10) == 0 and not FIXE and nbit > 100:
                 print('mode', k, ', iteration', nbit)
@@ -442,10 +442,10 @@ def emd(*args : Any, nargout : int = 1): # NOTE: Returns (imf, ort, nbits)
         r = r - m
         nbit=0
         #end main loop
-    if any(r) and not any(mask):
-        imf[k] = r
+    if any(r) and not mask:
+        imf = np.vstack((imf,r)) if imf.size != 0 else np.append(imf,r)
         
-        ort = io(x,imf)
+    ort = io(x,imf)
     
     if nargout == 1:
         return imf
@@ -764,4 +764,5 @@ def init(*argv : Any):
 
 if __name__ == '__main__':
     data_input = format_processor()
-    emd(data_input[0][1:201],nargout=1)
+    emd = emd(data_input[0][1:201],nargout=1)
+    print('heree')
