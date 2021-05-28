@@ -1,6 +1,7 @@
 Release Notes 2020/09/28
 
 The toolbox has undergone some major organizational revisions since coming under the perview of the Nonlinear Analysis Core, part of the Center for Human Movement Variability at the University of Nebraska at Omaha. Principally scripts and functions have been renamed so as to be sorted alphabetically. Time stamps have also been added to the scripts and functions to help keep a version history. Various scripts have undergone optimization to speed them up as well as other changes and additions. Please see the comments in the individual scripts for more details on these changes.
+
 Methods we have added include:
 1)  a second Average Mutual Information method called AMI_Thomas
 2)  a benchmark spreadsheet with runtime information called Benchmark
