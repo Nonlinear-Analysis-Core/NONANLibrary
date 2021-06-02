@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 import sys
 
-def AMI_Stergiou20190501(data, L, *argv):
+def AMI_Stergiou(data, L, *argv):
     """
     inputs    - data, column oriented time series
               - L, maximal lag to which AMI will be calculated
@@ -110,15 +110,16 @@ def AMI_Stergiou20190501(data, L, *argv):
 
       v[1,lag] = np.sum(np.multiply(AB,np.log2(np.divide(AB,np.multiply(pA[A],pB[B]))))) # Average Mutual Information
         
-    tau = np.array(np.full((1,2),-1,dtype=int))
+    tau = np.array(np.full((L,2),-1,dtype=float))
 
+    j = 0
     for i in range(v.shape[1]):                       # Finds first minimum
-      try:
-        if v[1,i-1]>=v[1,i] and v[1,i]<=v[1,i+1]: 
-          tau[0,0] = i
-          break
-      except:
-        break
+      if v[1,i-1]>=v[1,i] and v[1,i]<=v[1,i+1]: 
+        ami = v[1,i]
+        tau[j,:] = np.array([i,ami])
+        j+=1
+
+    tau = tau[:j]   # only include filled in data.
 
     initial_AMI = v[1,0]
     
@@ -134,6 +135,6 @@ def AMI_Stergiou20190501(data, L, *argv):
         tau[0] = 9999
       else:
         print('Max lag needed to be increased for AMI_Stergiou\n')
-        (tau, v_AMI) = AMI_Stergiou20190501(data,np.floor(L*1.5))    #Recursive call
+        (tau, v_AMI) = AMI_Stergiou(data,np.floor(L*1.5))    #Recursive call
 
     return (tau, v_AMI)

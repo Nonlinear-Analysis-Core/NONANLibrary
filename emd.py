@@ -102,7 +102,8 @@ import matplotlib.pyplot as plt
 # if equals to 2 shows sifting steps without pause (movie style)
 # rem: display is disabled when the input is complex
 #
-# INTERP: interpolation scheme: 'linear', 'cubic', 'pchip' or 'spline' (default)
+# INTERP: interpolation scheme: 'linear', 'cubic', or 'spline' (default)
+# Important to note, 'spline' defaults to using quadratic spline interpolation. For 'cubic' spline interpolation use 'cubic'.
 # see numpy.interp1d documentation for details
 #
 # MASK: masking signal used to improve the decomposition according to [5]
@@ -498,17 +499,21 @@ def mean_and_amplitude(m : np.ndarray, t : np.ndarray, INTERP : str, MODE_COMPLE
         nem = len(indmin) + len(indmax)
         nzm = len(indzer)
         (tmin, tmax, mmin, mmax) = boundary_conditions(indmin, indmax, t, m, m, NBSYM)
-        if 'linear' in INTERP:  #NOTE: This is the answer for a linear interpolation option.
+        if 'linear' in INTERP:  
             envmin = np.interp(t, tmin, mmin)
-        # elif 'spline' in INTERP: #NOTE: This does not yet work correctly as an option for spline interpolation.
-        #     tck = interp.splrep(tmin, mmin,)
-        #     xnew = np.arange(0, 2*np.pi, np.pi/50)
-        #     ynew = interp.splev(xnew, tck, der=0)
-        #     envmin = interp.interp1d(tmin,mmin,kind=INTERP)
-        if 'linear' in INTERP:
             envmax = np.interp(t,tmax,mmax)
-        # elif 'spline' in INTERP:
-        #     envmax = interp.interp1d(tmax,mmax,kind=INTERP)
+        elif 'quadratic' in INTERP:
+            f = interp.interp1d(tmin,mmin,kind='quadratic') # using quadratic spline interpolation
+            envmin = f(t)
+            f = interp.interp1d(tmax,mmax,kind='quadratic')
+            envmax = f(t)
+        elif 'cubic' or 'spline' in INTERP:
+            f = interp.interp1d(tmin,mmin,kind='cubic') # using cubic spline interpolation
+            envmin = f(t)
+            f = interp.interp1d(tmax,mmax,kind='cubic')
+            envmax = f(t)
+        # else, there should be no raise error as init(...) handles that.
+
         envmoy = (envmin+envmax)/2
         if nargout > 3:
             # expand dims needed for mean function.
@@ -624,7 +629,7 @@ def init(*argv : Any):
     defopts["maxiterations"] = 2000
     defopts["fix"] = 0
     defopts["maxmodes"] = 0
-    defopts["interp"] = 'linear'
+    defopts["interp"] = 'cubic'
     defopts["fix_h"] = 0
     defopts["mask"] = 0
     defopts["ndirs"] = 4
@@ -697,7 +702,7 @@ def init(*argv : Any):
     if L < 2:
         stop[1] = defstop[1]
 
-    if not isinstance(INTERP,str) or INTERP not in {'linear', 'cubic', 'spline'}:
+    if not isinstance(INTERP,str) or INTERP not in {'linear', 'cubic', 'quadratic','spline'}:
         raise TypeError('INTERP field must be linear, cubic, or spline')
 
     #special procedure when a masking signal is specified
