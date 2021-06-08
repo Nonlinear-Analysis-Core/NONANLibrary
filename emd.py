@@ -1,4 +1,4 @@
-from typing import Any
+import matplotlib.pyplot as plt
 from format_processor import format_processor
 import sys, warnings
 import numpy as np
@@ -170,10 +170,6 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
     (x,t,sd,sd2,tol,MODE_COMPLEX,ndirs,display_sifting,sdt,sd2t,r,imf,k,nbit,NbIt,MAXITERATIONS,FIXE,FIXE_H,MAXMODES,INTERP,mask) \
     = init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,MAXMODES,INTERP,mask)
 
-    if display_sifting:
-        fig_h = plt.figure()
-
-
     nbits = np.zeros(MAXMODES)
     #main loop : requires at least 3 extrema to proceed
     while not stop_EMD(r, MODE_COMPLEX, ndirs) and (k < MAXMODES+1 or MAXMODES == 0) and not mask:
@@ -224,15 +220,21 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
                 NBSYM = 2
                 (indmin,indmax) = extr(mp, nargout=2)
                 (tmin,tmax,mmin,mmax) = boundary_conditions(indmin,indmax,t,mp,mp,NBSYM)
-                envminp = interp.interp1d(tmin, mmin, kind=INTERP)
-                envmaxp = interp.interp1d(tmax,mmax,kind=INTERP)
+                if 'linear' in INTERP:
+                    envminp = np.interp(t,tmin,mmin)
+                    envmaxp = np.interp(t,tmax,mmax)
+                elif 'quadratic' or 'cubic' or 'spline' in INTERP:
+                    f = interp.interp1d(tmin,mmin,kind=INTERP)
+                    envminp = f(t)
+                    f = interp.interp1d(tmax,mmax,kind=INTERP)
+                    envmaxp = f(t)
                 envmoyp = (envminp+envmaxp)/2
                 if FIXE or FIXE_H:
-                    display_emd_fixe(t,m,mp,r,envminp,envmaxp,envmoyp,nbit,k,display_sifting)       #TODO: stub off this, plotting function
+                    display_emd_fixe(t,m,mp,r,envminp,envmaxp,envmoyp,nbit,k,display_sifting)      
                 else:
                     sxp=2*np.divide(abs(envmoyp),abs(envmaxp-envminp))
                     sp = np.mean(sxp)
-                    display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sp,sxp,sdt,sd2t,nbit,k,display_sifting,stop_sift)    #TODO: ditto above
+                    display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sp,sxp,sdt,sd2t,nbit,k,display_sifting,stop_sift)   
 
             mp = m
             nbit=nbit+1
@@ -273,10 +275,31 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
 def display_emd_fixe(t,m,mp,r,envminp,envmaxp,envmoyp,nbit,k,display_sifting) -> None:
     pass
 
-#TODO: Stubbed off plotting function.
-def display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sp,sxp,sdt,sd2t,nbit,k,display_sifting,stop_sift) -> None:
-    pass
-
+def display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sb,sxp,sdt,sd2t,nbit,k,display_sifting,stop_sift):
+    fig = plt.figure(figsize=(5,5))
+    grid = plt.GridSpec(4,4,hspace=0.7,wspace=0.5)
+    plot1 = fig.add_subplot(grid[0,:])
+    plot1.plot(t,mp) 
+    plot1.plot(t,envminp,'--k')
+    plot1.plot(t,envmoyp,'r')
+    plot1.set_xticks([])
+    plot1.set_title('IMF {};  iteration {} before sifting'.format(k,nbit))
+    plot2 = fig.add_subplot(grid[1,:])
+    plot2.plot(t,sxp)
+    plot2.plot(t,sdt,'--r')
+    plot2.plot(t,sd2t,':k')
+    plot2.set_title('stop parameter')
+    plot2.set_xticks([])
+    plot3 = fig.add_subplot(grid[2,:])
+    plot3.plot(t,m)
+    plot3.set_title('IMF {};  iteration {} after sifting'.format(k,nbit))
+    plot3.set_xticks([])
+    plot4 = fig.add_subplot(grid[3,:])
+    plot4.plot(t,r-m)
+    plot4.set_title('residue')
+    print('stop parameter mean value : {} before sifting and {} after'.format(sb,s))
+    plt.show()
+    
 def extr(x : np.ndarray, nargout : int = 2):
     t = np.arange(0,len(x)) # NOTE: Shape may be more accurate to the MATLAB code
 
@@ -506,17 +529,10 @@ def mean_and_amplitude(m : np.ndarray, t : np.ndarray, INTERP : str, MODE_COMPLE
         if 'linear' in INTERP:  
             envmin = np.interp(t, tmin, mmin)
             envmax = np.interp(t,tmax,mmax)
-        elif 'quadratic' in INTERP:
-            f = interp.interp1d(tmin,mmin,kind='quadratic') # using quadratic spline interpolation
+        elif 'quadratic' or 'cubic' or 'spline' in INTERP:
+            f = interp.interp1d(tmin,mmin,kind=INTERP) # using quadratic spline interpolation
             envmin = f(t)
-            f = interp.interp1d(tmax,mmax,kind='quadratic')
-            envmax = f(t)
-        elif 'cubic' or 'spline' in INTERP:
-            f = interp.interp1d(tmin,mmin,kind='cubic') # using cubic spline interpolation
-                                                        # NOTE: So the MATLAB 'cubic' and 'spline' interpolation produce the same values,
-                                                        # I am going to assume that using cubic spline interpolation by default is okay.
-            envmin = f(t)
-            f = interp.interp1d(tmax,mmax,kind='cubic')
+            f = interp.interp1d(tmax,mmax,kind=INTERP)
             envmax = f(t)
         # else, there should be no raise error as init(...) handles that.
 
@@ -715,5 +731,5 @@ def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,M
 
 if __name__ == '__main__':
     data_input = format_processor()
-    emd = emd(data_input[0][1:201],nargout=1)
+    emd = emd(data_input[0][1:201],display_sifting=1,nargout=1)
     print('here')
