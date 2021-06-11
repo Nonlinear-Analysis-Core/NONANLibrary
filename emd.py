@@ -242,7 +242,6 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
 
             if nbit == (MAXITERATIONS-1) and not FIXE and nbit > 100:
                 if s in vars():
-                    # TODO: These warnings are a little different from the MATLAB code, it may show differing output.
                     warnings.warn('emd:warning forced stop of sifting : too many iterations... mode',k,'. stop parameter mean value : ',s)
                 else:
                     warnings.warn('emd:warning forced stop of sifting : too many iterations... mode',k,'.')
@@ -279,7 +278,8 @@ def display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sb,sxp,sdt,sd2t,nbit,k,displa
     fig = plt.figure(figsize=(5,5))
     grid = plt.GridSpec(4,4,hspace=0.7,wspace=0.5)
     plot1 = fig.add_subplot(grid[0,:])
-    plot1.plot(t,mp) 
+    plot1.plot(t,mp)
+    plot1.plot(t,envmaxp,'--k') 
     plot1.plot(t,envminp,'--k')
     plot1.plot(t,envmoyp,'r')
     plot1.set_xticks([])
@@ -297,16 +297,16 @@ def display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sb,sxp,sdt,sd2t,nbit,k,displa
     plot4 = fig.add_subplot(grid[3,:])
     plot4.plot(t,r-m)
     plot4.set_title('residue')
-    print('stop parameter mean value : {} before sifting and {} after'.format(sb,s))
+    print('stop parameter mean value : {:.4f} before sifting and {:.4f} after'.format(sb,s))
     plt.show()
     
 def extr(x : np.ndarray, nargout : int = 2):
-    t = np.arange(0,len(x)) # NOTE: Shape may be more accurate to the MATLAB code
+    t = np.arange(0,len(x)) 
 
     m = len(x)
 
     if nargout > 2:
-        x1 = x[:m-1]      #NOTE: Make sure this is taking in the same number of points, may be off by one
+        x1 = x[:m-1]      
         x2 = x[1:m]
         indzer = np.argwhere(np.multiply(x1,x2) < 0)   # where element-wise product is negative
         if any(x == 0):
@@ -326,7 +326,7 @@ def extr(x : np.ndarray, nargout : int = 2):
             else:
                 indzer = np.sort(indz)
 
-    d = np.diff(x)      #NOTE (5/18) : Given the exact same input, the MATLAB code and the Python diff functions return different values.
+    d = np.diff(x)     
 
     n = len(d)
     d1 = d[:n-1]
@@ -344,8 +344,8 @@ def extr(x : np.ndarray, nargout : int = 2):
 
         bad = d==0
         dd = np.diff(np.array([0, bad, 0])) if len(bad) == 1 else np.diff(np.concatenate((np.array([0]),bad,np.array([0]))))
-        debs = np.where(dd == 1)
-        fins = np.where(dd == -1)
+        debs = np.where(dd == 1)[0]
+        fins = np.where(dd == -1)[0]
         if debs[0] == 0:
             if len(debs) > 1:
                 debs = debs[1:]
@@ -371,10 +371,14 @@ def extr(x : np.ndarray, nargout : int = 2):
                     if d[fins[k]] > 0:
                         imin = np.append(imin, round((fins[k] + debs[k])/2))
         if len(imax) > 0:
-            indmax = np.sort(np.concatenate((indmax,imax))) # NOTE: bound to have errors
+            indmax = np.sort(np.concatenate((indmax.flatten(),imax.flatten())))
+            if indmax.dtype == 'float64':
+                indmax = indmax.astype('int32')
 
         if len(imin) > 0:
-            indmin = np.sort(np.concatenate((indmin,imax))) # NOTE: bound to have errors
+            indmin = np.sort(np.concatenate((indmin.flatten(),imax.flatten())))
+            if indmin.dtype == 'float64':
+                indmin = indmin.astype('int32')
     
     if nargout == 2:
         return indmin, indmax
@@ -398,7 +402,8 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
             lsym = indmax[0]
         else:
             lmax = np.flipud(indmax[:min(indmax[-1],nbsym)]).flatten()
-            lmin = np.array([np.flipud(indmin[:min(indmin[-1],nbsym-1)]),1])
+            test = np.flipud(indmin[:min(indmin[-1],nbsym-1)])
+            lmin = np.concatenate((np.flipud(indmin[:min(indmin[-1],nbsym-1)]),np.array([1])))
             lsym = 0
     else:
         if x[0] < x[indmax[0]]:
@@ -473,8 +478,8 @@ def stop_EMD(r : np.ndarray, MODE_COMPLEX : int, ndirs : int):
     ner = np.zeros(ndirs)
     if MODE_COMPLEX:
         for k in range(ndirs):
-            phi = (k-1)*np.pi/ndirs
-            (indmin,indmax) = extr(np.real(np.exp(1.j*phi)*r))
+            phi = k*np.pi/ndirs
+            (indmin,indmax) = extr(np.real(np.exp(1j*phi)*r))
             ner[k] = len(indmin) + len(indmax) #NOTE: See how these two functions interact
         stop = any(ner < 3)
     else:
@@ -490,34 +495,40 @@ def mean_and_amplitude(m : np.ndarray, t : np.ndarray, INTERP : str, MODE_COMPLE
     NBSYM = 2
     nem = np.zeros(ndirs)
     nzm = np.zeros(ndirs)
-    envmin = np.zeros(ndirs)
-    envmax = np.zeros(ndirs)
+    envmin = np.zeros(ndirs,dtype=object) if MODE_COMPLEX else np.zeros(ndirs)
+    envmax = np.zeros(ndirs,dtype=object) if MODE_COMPLEX else np.zeros(ndirs)
 
     if MODE_COMPLEX:
         if MODE_COMPLEX == 1:
             # do something
             for k in range(ndirs):
-                phi = (k-1)*np.pi/ndirs
-                y = np.real(np.exp(-1.j*phi)*m)
-                indmin, indmax, indzer = extr(y, nargout=3) # TODO: Make sure the nargout in the extr function is working.
+                phi = k*np.pi/ndirs
+                y = np.real(np.exp(-1j*phi)*m)
+                indmin, indmax, indzer = extr(y, nargout=3) 
                 nem[k] = len(indmin) + len(indmax)
                 nzm[k] = len(indzer)
                 tmin, tmax, zmin, zmax = boundary_conditions(indmin, indmax, t, y, m, NBSYM)
-                envmin[k] = interp.interp1d(tmin,zmin,kind=INTERP)  # NOTE: Undoubtedly this has bugs, but the MATLAB version is vague here
+                envmin[k] = interp.interp1d(tmin,zmin,kind=INTERP)  
                 envmax[k] = interp.interp1d(tmax,zmax,kind=INTERP)
             envmoy = np.mean((envmin-envmax)/2,axis=0)
             if nargout > 3:
                 amp = np.mean(np.abs(envmax-envmin),axis=0)/2
         elif MODE_COMPLEX == 2:
             for k in range(ndirs):
-                phi = (k-1)*np.pi/ndirs
-                y = np.real(np.exp(-1.j*phi)*m)
-                indmin, indmax, indzer = extr(y,nargout=3) # TODO: Make sure the nargout in the extr function is working.
+                phi = k*np.pi/ndirs
+                y = np.real(np.exp(-1j*phi)*m)
+                indmin, indmax, indzer = extr(y,nargout=3)
                 nem[k] = len(indmin) + len(indmax)
                 nzm[k] = len(indzer)
-                (tmin, tmax, zmin, zmax) = boundary_conditions(indmin, indmax, t,y,y,NBSYM) # NOTE: y is input twice?
-                envmin[k] = np.exp(1.j*phi)*interp.interp1d(tmin,zmin,kind=INTERP)
-                envmax[k] = np.exp(1.j*phi)*interp.interp1d(tmax,zmax,kind=INTERP)
+                (tmin, tmax, zmin, zmax) = boundary_conditions(indmin, indmax, t,y,y,NBSYM) 
+                if 'quadratic' or 'cubic' or 'spline' in INTERP:
+                    f = interp.interp1d(tmin,zmin,kind=INTERP)
+                    envmin[k] = np.exp(1j*phi)*f(t)
+                    f = interp.interp1d(tmax,zmax,kind=INTERP)
+                    envmax[k] = np.exp(1j*phi)*f(t)
+                elif 'linear' in INTERP:
+                    envmin[k] = np.interp(t,tmin,zmin)
+                    envmax[k] = np.interp(t,tmax,zmax)
             envmoy = np.mean((envmin+envmax),axis=0)
             if nargout > 3:
                 amp = np.mean(np.abs(envmax-envmin),axis=0)/2
@@ -557,7 +568,7 @@ def stop_sifting(m:np.ndarray,t:np.ndarray,sd:float,sd2:float,tol:float,INTERP:s
         (envmoy,nem,nzm,amp) = mean_and_amplitude(m,t,INTERP,MODE_COMPLEX,ndirs,nargout=4)
         sx = np.divide(abs(envmoy),amp)
         s = np.mean(sx)
-        stop = not ((np.mean(sx > sd) > tol or (sx > sd2)) and (nem > 2))     # NOTE: This may work correctly.
+        stop = not ((np.mean(sx > sd) > tol or (sx > sd2)) and (nem > 2))     
         if not MODE_COMPLEX:
             stop = stop and not (abs(nzm-nem) > 1)
     except:
@@ -582,7 +593,7 @@ def stop_sifting_fixe(t:np.ndarray,m:np.ndarray,INTERP:str,MODE_COMPLEX:int,ndir
         moyenne = np.zeros((1,len(m)))
         stop = 1
     finally:
-        return stop,moyenne # NOTE: might not be a good idea to have this in a finally block, look at this later.
+        return stop,moyenne
 
 def stop_sifting_fixe_h(t:np.ndarray,m:np.ndarray,INTERP:str,stop_count:int,FIXE_H:int,MODE_COMPLEX:int,ndirs:int,nargout:int=2):
     try:
@@ -596,7 +607,7 @@ def stop_sifting_fixe_h(t:np.ndarray,m:np.ndarray,INTERP:str,stop_count:int,FIXE
     except:
         moyenne = np.zeros((1,len(m))) 
         stop = 1
-        stop_count = 0 # NOTE: This line is added, not sure if necessary.
+        stop_count = 0 
     finally:
         if nargout == 2:
             return stop,moyenne
@@ -711,8 +722,8 @@ def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,M
             raise TypeError('cannot use both ''FIX'' and ''FIX_H'' modes')
 
     # if not real values found, use complex_version, false otherwise.
-    MODE_COMPLEX = not all(np.isreal(x)) * MODE_COMPLEX
-    if MODE_COMPLEX != 0 and MODE_COMPLEX != 1 and MODE_COMPLEX != 2:   # if not 1 
+    MODE_COMPLEX = MODE_COMPLEX if not all (np.isreal(x)) else 0
+    if MODE_COMPLEX != 0 and MODE_COMPLEX != 1 and MODE_COMPLEX != 2: 
         raise ValueError('COMPLEX_VERSION parameter must be equal to 0, 1, or 2')
 
     # number of extrema and zero-crossings in residual
@@ -731,5 +742,6 @@ def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,M
 
 if __name__ == '__main__':
     data_input = format_processor()
-    emd = emd(data_input[0][1:201],display_sifting=1,nargout=1)
-    print('here')
+    complex_ts = np.array(data_input[0][1:201]) + 1j
+    emd = emd(complex_ts,nargout=1)
+    j = 1
