@@ -1,3 +1,4 @@
+from re import X
 import matplotlib.pyplot as plt
 from format_processor import format_processor
 import sys, warnings
@@ -170,6 +171,8 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
     (x,t,sd,sd2,tol,MODE_COMPLEX,ndirs,display_sifting,sdt,sd2t,r,imf,k,nbit,NbIt,MAXITERATIONS,FIXE,FIXE_H,MAXMODES,INTERP,mask) \
     = init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,MAXMODES,INTERP,mask)
 
+    v = 0
+
     nbits = np.zeros(MAXMODES)
     #main loop : requires at least 3 extrema to proceed
     while not stop_EMD(r, MODE_COMPLEX, ndirs) and (k < MAXMODES+1 or MAXMODES == 0) and not mask:
@@ -197,8 +200,8 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
 
 
     # # sifting loop
-        while not stop_sift and nbit<MAXITERATIONS:           
-            #NOTE: Check output formatting, when getting to this section of the code.
+        while not stop_sift and nbit<MAXITERATIONS:
+            v+=1           
             if not MODE_COMPLEX and nbit>MAXITERATIONS/5 and nbit % np.floor(MAXITERATIONS/10) == 0 and not FIXE and nbit > 100:
                 print('mode', k, ', iteration', nbit)
                 if 's' in locals():
@@ -242,9 +245,9 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
 
             if nbit == (MAXITERATIONS-1) and not FIXE and nbit > 100:
                 if s in vars():
-                    warnings.warn('emd:warning forced stop of sifting : too many iterations... mode',k,'. stop parameter mean value : ',s)
+                    warnings.warn('emd:warning forced stop of sifting : too many iterations... mode {}. stop parameter mean value : {:.4f}'.format(k, s), RuntimeWarning)
                 else:
-                    warnings.warn('emd:warning forced stop of sifting : too many iterations... mode',k,'.')
+                    warnings.warn('emd:warning forced stop of sifting : too many iterations... mode {} .'.format(k), RuntimeWarning)
         # sifting loop
         imf = np.vstack((imf,m)) if imf.size != 0 else np.append(imf,m)
 
@@ -402,7 +405,6 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
             lsym = indmax[0]
         else:
             lmax = np.flipud(indmax[:min(indmax[-1],nbsym)]).flatten()
-            test = np.flipud(indmin[:min(indmin[-1],nbsym-1)])
             lmin = np.concatenate((np.flipud(indmin[:min(indmin[-1],nbsym-1)]),np.array([1])))
             lsym = 0
     else:
@@ -411,7 +413,7 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
             lmin = np.flipud(indmin[1:min(indmin[-1],nbsym+1)]).flatten()
             lsym = indmin[0]
         else:
-            lmax = np.array([np.flipud(indmax[:min(indmax[-1],nbsym-1)]),1])
+            lmax = np.concatenate((np.flipud(indmax[:min(indmax[-1],nbsym-1)]),np.array([1])))
             lmin = np.flipud(indmin[:min(indmin[-1],nbsym)]).flatten()
             lsym = 0
     
@@ -568,7 +570,10 @@ def stop_sifting(m:np.ndarray,t:np.ndarray,sd:float,sd2:float,tol:float,INTERP:s
         (envmoy,nem,nzm,amp) = mean_and_amplitude(m,t,INTERP,MODE_COMPLEX,ndirs,nargout=4)
         sx = np.divide(abs(envmoy),amp)
         s = np.mean(sx)
-        stop = not ((np.mean(sx > sd) > tol or (sx > sd2)) and (nem > 2))     
+        if type(nem) == int:
+            stop = not ((np.mean(sx > sd) > tol or (any(sx > sd2))) and ((nem > 2)))
+        else:
+            stop = not ((np.mean(sx > sd) > tol or (any(sx > sd2))) and all(nem > 2))   
         if not MODE_COMPLEX:
             stop = stop and not (abs(nzm-nem) > 1)
     except:
@@ -743,5 +748,6 @@ def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,M
 if __name__ == '__main__':
     data_input = format_processor()
     complex_ts = np.array(data_input[0][1:201]) + 1j
-    emd = emd(complex_ts,nargout=1)
-    j = 1
+    w = 0
+    emd = emd(data_input[0][1:201],nargout=1)
+    print("test")
