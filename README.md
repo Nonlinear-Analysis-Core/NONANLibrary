@@ -1,6 +1,7 @@
 # NONANToolbox
 
 Overview
+
 This is a list of the included functions and the full name of the methods.
 1)  AMI_Stergiou, This is a histogram-based method of Average Mutual Information that is used to find a time lag for state space reconstruction.
 2)  AMI_Thomas, This is a kernal density-based method of Average Mutual Information that is used to find a time lag for state space reconstruction.
