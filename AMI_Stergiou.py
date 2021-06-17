@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import sys
+from format_processor import format_processor
 
 def AMI_Stergiou(data, L, *argv):
     """
@@ -10,6 +11,10 @@ def AMI_Stergiou(data, L, *argv):
                 adaptive formula will be used
     outputs   - tau, first minimum in the AMI vs lag plot
               - v_AMI, vector of AMI values and associated lags
+    
+    inputs    - x, single column array with the same length as y.
+              - y, single column array with the same length as x.
+    outputs   - ami, the average mutual information between the two arrays
 
     Remarks
     - This code uses average mutual information to find an appropriate lag
@@ -71,70 +76,109 @@ def AMI_Stergiou(data, L, *argv):
     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     """
-    N = len(data) 
-
     eps = np.finfo(float).eps # smallest floating point value
 
-    data = np.array(data)
+    if isinstance(L, int):
+      N = len(data) 
 
-    if len(argv) == 0:
-      bins = np.ceil((np.max(data) - np.min(data))/(3.49 * np.nanstd(data * N**(-1/3), axis=0)))
-    else:
-      bins = argv[0]
-    
-    bins = int(bins) 
 
-    data = data - min(data) # make all data points positive
-    data2 = np.floor(data/(np.max(data)/(bins - eps)))
+      data = np.array(data)
 
-    v = np.zeros((L,1)) # preallocate the vector
-    overlap = N - L
-    increment = 1/overlap
-
-    data2 = np.array(data2,dtype=int) # converts the vector of double vals from data2 into a list of integers from 0 to overlap (where overlap is N-L).
-
-    pA = sp.csr_matrix((np.full(overlap,increment),(data2[0:overlap],np.ones(overlap,dtype=int)))).toarray()[:,1]
-    
-
-    v = np.zeros((2, L))
-
-    for lag in range(L): # used to be from 0:L-1 (BS)
-      v[0,lag]=lag   
+      if len(argv) == 0:
+        bins = np.ceil((np.max(data) - np.min(data))/(3.49 * np.nanstd(data * N**(-1/3), axis=0)))
+      else:
+        bins = argv[0]
       
-      pB = sp.csr_matrix((np.full(overlap,increment),(data2[lag:overlap+lag],np.ones(overlap,dtype=int)))).toarray()[:,1]
-      # find joint probability p(A,B)=p(x(t),x(t+time_lag))
-      pAB = sp.csr_matrix((np.full(overlap,increment), (data2[0:overlap], data2[lag:overlap+lag])))
+      bins = int(bins) 
+
+      data = data - min(data) # make all data points positive
+      y = np.floor(data/(np.max(data)/(bins - eps)))
+      y = np.array(y,dtype=int) # converts the vector of double vals from data2 into a list of integers from 0 to overlap (where overlap is N-L).
+
+      v = np.zeros((L,1)) # preallocate the vector
+      overlap = N - L
+      increment = 1/overlap
+
+      pA = sp.csr_matrix((np.full(overlap,increment),(y[0:overlap],np.ones(overlap,dtype=int)))).toarray()[:,1]
+
+      v = np.zeros((2, L))
+
+      for lag in range(L): # used to be from 0:L-1 (BS)
+        v[0,lag]=lag   
+        
+        pB = sp.csr_matrix((np.full(overlap,increment),(y[lag:overlap+lag],np.ones(overlap,dtype=int)))).toarray()[:,1]
+        # find joint probability p(A,B)=p(x(t),x(t+time_lag))
+        pAB = sp.csr_matrix((np.full(overlap,increment), (y[0:overlap], y[lag:overlap+lag])))
+        
+        (A, B) = np.nonzero(pAB)
+        AB = pAB.data
+
+        v[1,lag] = np.sum(np.multiply(AB,np.log2(np.divide(AB,np.multiply(pA[A],pB[B]))))) # Average Mutual Information
+          
+      tau = np.array(np.full((L,2),-1,dtype=float))
+
+      j = 0
+      for i in range(v.shape[1]):                       # Finds first minimum
+        if v[1,i-1]>=v[1,i] and v[1,i]<=v[1,i+1]: 
+          ami = v[1,i]
+          tau[j,:] = np.array([i,ami])
+          j+=1
+
+      tau = tau[:j]   # only include filled in data.
+
+      initial_AMI = v[1,0]
       
+      for i in range(v.shape[1]):                       # Finds first AMI value that is 20% initial AMI
+        if v[1,i] < (0.2*initial_AMI):
+          tau[0,1] = i
+          break
+
+      v_AMI=v
+
+      if len(tau) == 0:      
+        if L*1.5 > len(data/3):
+          tau[0] = 9999
+        else:
+          print('Max lag needed to be increased for AMI_Stergiou\n')
+          (tau, v_AMI) = AMI_Stergiou(data,np.floor(L*1.5))    #Recursive call
+
+      return (tau, v_AMI)
+    elif isinstance(L, np.ndarray) or isinstance(L, list):
+      x = data if isinstance(data,np.ndarray) else np.array(data)
+      y = L if isinstance(L,np.ndarray) else np.array(L)
+
+      if len(x) != len(y):
+        raise ValueError('X and Y must be the same size.')
+      
+      increment = 1/len(y)
+      one = np.ones(len(y),dtype=int)
+
+      bins1 = np.ceil((max(x)-min(x))/(3.49*np.nanstd(x)*len(x)**(-1/3))) # Scott 1979
+      bins2 = np.ceil((max(y)-min(y))/(3.49*np.nanstd(y)*len(y)**(-1/3))) # Scott 1979
+      x = x - min(x) # make all data points positive
+      x = np.floor(x/(max(x)/(bins1 - eps))) # scaling the data
+      y = y - min(y) # make all data points positive
+      y = np.floor(y/(max(y)/(bins2 - eps))) # scaling the data
+
+      x = np.array(x,dtype=int)
+      y = np.array(y,dtype=int)
+
+      increment = np.full(len(y),increment)
+      pA = sp.csr_matrix((increment,(x,one))).toarray()[:,1]
+      pB = sp.csr_matrix((increment,(y,one))).toarray()[:,1]
+      pAB = sp.csr_matrix((increment,(x,y)))
       (A, B) = np.nonzero(pAB)
       AB = pAB.data
+      ami = np.sum(np.multiply(AB,np.log2(np.divide(AB,np.multiply(pA[A],pB[B])))))
 
-      v[1,lag] = np.sum(np.multiply(AB,np.log2(np.divide(AB,np.multiply(pA[A],pB[B]))))) # Average Mutual Information
-        
-    tau = np.array(np.full((L,2),-1,dtype=float))
+      return ami
+    else:
+      raise ValueError('Invalid input, read documentation for input options.')
 
-    j = 0
-    for i in range(v.shape[1]):                       # Finds first minimum
-      if v[1,i-1]>=v[1,i] and v[1,i]<=v[1,i+1]: 
-        ami = v[1,i]
-        tau[j,:] = np.array([i,ami])
-        j+=1
+if __name__ == '__main__':
+  print('here')
+  test_data = format_processor()
+  x = np.array(test_data[0][1:201])
+  y = np.array(test_data[0][5:205])
+  AMI_Stergiou(x,y)
 
-    tau = tau[:j]   # only include filled in data.
-
-    initial_AMI = v[1,0]
-    
-    for i in range(v.shape[1]):                       # Finds first AMI value that is 20% initial AMI
-      if v[1,i] < (0.2*initial_AMI):
-        tau[0,1] = i
-        break
-
-    v_AMI=v
-
-    if len(tau) == 0:      
-      if L*1.5 > len(data/3):
-        tau[0] = 9999
-      else:
-        print('Max lag needed to be increased for AMI_Stergiou\n')
-        (tau, v_AMI) = AMI_Stergiou(data,np.floor(L*1.5))    #Recursive call
-
-    return (tau, v_AMI)
