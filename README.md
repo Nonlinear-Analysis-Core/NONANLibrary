@@ -1,5 +1,11 @@
 # NONANToolbox
 
+INSTALLATION
+
+To download this library, click on the green dropdown box that says "Code" and click on "Download ZIP". Once the ZIP file has downloaded, you will have to extract the files from that ZIP folder. Once the files are extracted, they will be available for your use.
+
+FILES
+
 This is a list of the included functions and the full name of the methods.
 
 1)  AMI_Stergiou, This is a histogram-based method of Average Mutual Information that is used to find a time lag using average mutual information for state space reconstruction.
@@ -22,6 +28,18 @@ This is a list of the included functions and the full name of the methods.
 18) Surr_findrho, This should be used to find thee optimal noise level used in creating a Pseudo Period surrogate time series.
 19) Surr_PseudoPeriodic, This is used to find a Pseudo Period surrogate time series using the result from Surr_findrho.
 20) Surr_Theiler, This can be used to create different surrogates by the methods published by Theiler.
+
+COPYRIGHT
+
+Copyright 2020 Nonlinear Analysis Core, Center for Human Movement Variability, University of Nebraska at Omaha
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright  notice, this list of conditions and the following disclaimer in the  documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CONTACT
 
