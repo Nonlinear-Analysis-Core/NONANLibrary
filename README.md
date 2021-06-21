@@ -31,7 +31,7 @@ This is a list of the included functions and the full name of the methods.
 
 COPYRIGHT
 
-Copyright 2020 Nonlinear Analysis Core, Center for Human Movement Variability, University of Nebraska at Omaha
+Copyright 2021 Nonlinear Analysis Core, Center for Human Movement Variability, University of Nebraska at Omaha
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
