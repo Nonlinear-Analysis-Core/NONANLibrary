@@ -1,6 +1,9 @@
 import numpy as np
+from numba import jit,njit
 from scipy import stats
 from typing import Union
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 def AMI_Thomas(x : np.ndarray, L : Union[int,np.ndarray,list]) -> Union[np.ndarray,float]:
     """
@@ -88,7 +91,7 @@ def AMI_Thomas(x : np.ndarray, L : Union[int,np.ndarray,list]) -> Union[np.ndarr
         (m,n) = np.shape(x)
 
         if m > 1 and n > 1:
-            raise ValueError('Input vector is not one dimensional.')
+            raise ValueError('Input time series is not one dimensional.')
 
         # calculate AMI at each lag
         ami = np.zeros((L,2))
@@ -118,7 +121,7 @@ def AMI_Thomas(x : np.ndarray, L : Union[int,np.ndarray,list]) -> Union[np.ndarr
 
         if not isinstance(y, np.ndarray):
             y = np.array(y,ndmin=2)
-        elif x.ndim == 1:
+        elif y.ndim == 1:
             y = np.array(y,ndmin=2)
 
         if len(y) != len(x):
@@ -146,9 +149,12 @@ def average_mutual_information(data : np.ndarray) -> float:
     Y = data[1,:]
     # Example below is for normal reference rule in 
     # 2 dims, Scott (1992).
-    hx = np.std(X)/(n**(1/6))
-    hy = np.std(Y)/(n**(1/6))
-    # Compute univariate marginal density functions. 
+    hx = np.std(X,ddof=1)/(n**(1/6))    # MATLAB version has ddof := 1 as default, NumPy := 0 as default
+    hy = np.std(Y,ddof=1)/(n**(1/6))
+    # Compute univariate marginal density functions.
+    P_x = np.array([])
+    P_y = np.array([])
+
     P_x = univariate_kernel_density(X, X, hx) 
     P_y = univariate_kernel_density(Y, Y, hy) 
     # Compute joint probability density. 
@@ -156,6 +162,7 @@ def average_mutual_information(data : np.ndarray) -> float:
     AMI = np.sum(np.log2(np.divide(JointP_xy,np.multiply(P_x,P_y))))/n
     return AMI
 
+@jit
 def univariate_kernel_density(value : np.ndarray, data : np.ndarray, window : float) -> np.ndarray:
     """
     Usage:  y = univariate_kernel_density(value, data, window) 
@@ -167,7 +174,6 @@ def univariate_kernel_density(value : np.ndarray, data : np.ndarray, window : fl
     Output is an m-vector of probabilities.
     """
     h = window 
-    # NOTE: Make sure these are getting the correct lengths.
     n = len(data) 
     m = len(value) 
     # We use matrix operations to speed up computation 
@@ -178,8 +184,7 @@ def univariate_kernel_density(value : np.ndarray, data : np.ndarray, window : fl
     H = extended(data, m, False) 
     prob = stats.norm.pdf((G-H)/h)
     fhat = np.sum(prob,axis=0)/(n*h) 
-    y = fhat
-    return y
+    return fhat
 
 def bivariate_kernel_density(value : np.ndarray, data : np.ndarray, Hone : float, Htwo : float) -> np.ndarray:
     """
@@ -205,11 +210,13 @@ def bivariate_kernel_density(value : np.ndarray, data : np.ndarray, Hone : float
     y = np.zeros(number_pts)
     y[0] = (1/n)*cumprob[n-1]
     for i in range(1,number_pts):
-        index = n*(i+1) 
-        y[i] = (1/n)*(cumprob[index]-cumprob[index-n-1]) if index != len(cumprob) else (1/n)*(cumprob[index-1]-cumprob[index-n-1])
+        index = n*(i+1)
+        # y(i) = (1/(n))* (Cumprob(index)-Cumprob(index - n)); 
+        y[i] = (1/n)*(cumprob[index-1]-cumprob[index-n-1])
     y = y.T.copy()
     return y
 
+@jit
 def linear_depth(feet : np.ndarray, toes : np.ndarray) -> np.ndarray:
     """
     linear_depth takes a matrix ‘feet’ and lengthens 
@@ -231,6 +238,7 @@ def linear_depth(feet : np.ndarray, toes : np.ndarray) -> np.ndarray:
     y = blocks + bricks 
     return y
 
+@njit
 def extended(vector : np.ndarray, n : int, vertical : bool) -> np.ndarray:
     """
     Takes an m-dimensional row vector and outputs an 
@@ -247,3 +255,4 @@ def extended(vector : np.ndarray, n : int, vertical : bool) -> np.ndarray:
         else: # if horizontal
             M[i,:] = vector
     return M # where M previously was y.
+
