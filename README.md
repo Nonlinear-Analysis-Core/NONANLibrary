@@ -4,6 +4,10 @@ INSTALLATION
 
 To download this library, click on the green dropdown box that says "Code" and click on "Download ZIP". Once the ZIP file has downloaded, you will have to extract the files from that ZIP folder. Once the files are extracted, they will be available for your use.
 
+MATLAB VERSION
+
+There are no known incompatibilities using MATLAB version R2019a.
+
 FILES
 
 This is a list of the included functions and the full name of the methods.
