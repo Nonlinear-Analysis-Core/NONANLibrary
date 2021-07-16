@@ -8,6 +8,17 @@ MATLAB VERSION
 
 There are no known incompatibilities using MATLAB version R2019a.
 
+PYTHON VERSION
+Libaries and the versions used:
+
+Python=3.8.8
+NumPy=1.20.1
+SciPy=1.6.2
+Numba=0.53.1
+scikit-image=0.18.1           
+scikit-learn=0.24.1           
+
+
 FILES
 
 This is a list of the included functions and the full name of the methods.
