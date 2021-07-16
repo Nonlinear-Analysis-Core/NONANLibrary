@@ -1,9 +1,11 @@
 import numpy as np
-from numba import jit,njit
+import timeit as ti
+from numba import jit,prange
 from scipy import stats
 from typing import Union
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+os.environ["NUMBA_CACHE_DIR"]=os.getcwd()
 
 def AMI_Thomas(x : np.ndarray, L : Union[int,np.ndarray,list]) -> Union[np.ndarray,float]:
     """
@@ -162,7 +164,6 @@ def average_mutual_information(data : np.ndarray) -> float:
     AMI = np.sum(np.log2(np.divide(JointP_xy,np.multiply(P_x,P_y))))/n
     return AMI
 
-@jit
 def univariate_kernel_density(value : np.ndarray, data : np.ndarray, window : float) -> np.ndarray:
     """
     Usage:  y = univariate_kernel_density(value, data, window) 
@@ -205,18 +206,23 @@ def bivariate_kernel_density(value : np.ndarray, data : np.ndarray, Hone : float
     # The adjusted covariance matrix: 
     W = np.array([Hone**2,rho*Hone*Htwo,rho*Hone*Htwo,Htwo**2]).reshape((2,2))
     differences = linear_depth(value,np.negative(data))
-    prob = stats.multivariate_normal.pdf(differences,cov=W)
+    prob = stats.multivariate_normal.pdf(differences, cov=W)
+    # jitted function would need: n, prob, number_pts
+    return bivariate_kernel_density_sub(n,prob,number_pts)
+
+
+@jit(nopython=True,cache=True,nogil=True)
+def bivariate_kernel_density_sub(n,prob,number_pts):
     cumprob = np.cumsum(prob)
     y = np.zeros(number_pts)
     y[0] = (1/n)*cumprob[n-1]
-    for i in range(1,number_pts):
+    for i in prange(1,number_pts):
         index = n*(i+1)
-        # y(i) = (1/(n))* (Cumprob(index)-Cumprob(index - n)); 
         y[i] = (1/n)*(cumprob[index-1]-cumprob[index-n-1])
     y = y.T.copy()
     return y
 
-@jit
+@jit(nopython=True,cache=True,nogil=True)
 def linear_depth(feet : np.ndarray, toes : np.ndarray) -> np.ndarray:
     """
     linear_depth takes a matrix ‘feet’ and lengthens 
@@ -233,12 +239,12 @@ def linear_depth(feet : np.ndarray, toes : np.ndarray) -> np.ndarray:
         toes = toes.T.copy()
         bricks = blocks.copy()
         for i in range(a):
-            blocks[i*b: (i+1)*b,:] = np.tile(feet[:,i],b).reshape(-1,2)
+            blocks[i*b: (i+1)*b,:] = feet[:,i]
             bricks[i*b: (i+1)*b,:] = toes
     y = blocks + bricks 
     return y
 
-@njit
+@jit(nopython=True,cache=True,nogil=True)
 def extended(vector : np.ndarray, n : int, vertical : bool) -> np.ndarray:
     """
     Takes an m-dimensional row vector and outputs an 
@@ -255,4 +261,3 @@ def extended(vector : np.ndarray, n : int, vertical : bool) -> np.ndarray:
         else: # if horizontal
             M[i,:] = vector
     return M # where M previously was y.
-

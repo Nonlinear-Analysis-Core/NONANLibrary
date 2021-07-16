@@ -34,7 +34,6 @@ def Ent_MS_Plus20201001(x, tau, m, r):
     R = r*np.std(x)
     N = len(x)
 
-    # NOTE: May change the dtype away from object in the future, I am just not sure what the returning variables are yet for each function.
     GMSE = np.zeros(tau, dtype=object)
     MSE = np.zeros(tau, dtype=object)
     MSFE = np.zeros(tau, dtype=object)

@@ -1,10 +1,9 @@
-from re import X
 import matplotlib.pyplot as plt
-from format_processor import format_processor
-import sys, warnings
+import warnings
 import numpy as np
 import scipy.interpolate as interp
 import matplotlib.pyplot as plt
+from format_processor import format_processor
 
 def emd(x, t = 0, stop = np.array([0.05,0.5,0.05]), ndirs = 4, display_sifting = 0, MODE_COMPLEX = 2, MAXITERATIONS = 2000, 
 FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
@@ -112,28 +111,7 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
 
     MASK: masking signal used to improve the decomposition according to [5]
 
-
-    Examples
-
-
-    X = rand(1,512);
-
-    IMF = emd(X);
-
-    IMF = emd(X,'STOP',[0.1,0.5,0.05],'MAXITERATIONS',100);
-
-    T=linspace(0,20,1e3);
-    X = 2*exp(i*T)+exp(3*i*T)+.5*T;
-    IMF = emd(X,'T',T);
-
-    OPTIONS.DISLPAY = 1;
-    OPTIONS.FIX = 10;
-    OPTIONS.MAXMODES = 3;
-    [IMF,ORT,NBITS] = emd(X,OPTIONS);
-
-
     References
-
 
     [1] N. E. Huang et al., "The empirical mode decomposition and the
     Hilbert spectrum for non-linear and non stationary time series analysis",
@@ -155,14 +133,6 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
     [5] R. Deering and J. F. Kaiser, "The use of a masking signal to improve 
     empirical mode decomposition", ICASSP 2005
 
-
-    See also
-    emd_visu (visualization),
-    emdc, emdc_fix (fast implementations of EMD),
-    cemdc, cemdc_fix, cemdc2, cemdc2_fix (fast implementations of bivariate EMD),
-    hhspectrum (Hilbert-Huang spectrum)
-
-
     G. Rilling, last modification: 3.2007
     gabriel.rilling@ens-lyon.fr
     """
@@ -175,7 +145,7 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
 
     nbits = np.zeros(MAXMODES)
     #main loop : requires at least 3 extrema to proceed
-    while not stop_EMD(r, MODE_COMPLEX, ndirs) and (k < MAXMODES+1 or MAXMODES == 0) and not mask:
+    while not stop_EMD(r, MODE_COMPLEX, ndirs) and (k < MAXMODES+1 or MAXMODES == 0) and not isinstance(mask,np.ndarray):
         # current mode
         m = r
         # mode at previous iteration
@@ -214,7 +184,7 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
             if FIXE:
                 (stop_sift,moyenne) = stop_sifting_fixe(t,m,INTERP,MODE_COMPLEX,ndirs)
             elif FIXE_H:
-                (stop_sift,moyenne,stop_count) = stop_sifting_fixe_h(t,m,INTERP,stop_count,FIXE_H,MODE_COMPLEX,ndirs)
+                (stop_sift,moyenne,stop_count) = stop_sifting_fixe_h(t,m,INTERP,stop_count,FIXE_H,MODE_COMPLEX,ndirs,nargout=3)
             else:
                 (stop_sift,moyenne,s) = stop_sifting(m,t,sd,sd2,tol,INTERP,MODE_COMPLEX,ndirs,nargout=3)
 
@@ -259,7 +229,7 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
         r = r - m
         nbit=0
         #end main loop
-    if any(r) and not mask:
+    if any(r) and not isinstance(mask,np.ndarray):
         imf = np.vstack((imf,r)) if imf.size != 0 else np.append(imf,r)
         
     ort = io(x,imf)
@@ -273,9 +243,25 @@ FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):
         \nValid options are "nargout=1" and "nargout=3".\
         \nCheck documentation for additional details.')
 
-#TODO: Stubbed off plotting function.
 def display_emd_fixe(t,m,mp,r,envminp,envmaxp,envmoyp,nbit,k,display_sifting) -> None:
     pass
+    fig = plt.figure(figsize=(5,5))
+    grid = plt.GridSpec(3,3,hspace=0.7,wspace=0.5)
+    plot1 = fig.add_subplot(grid[0,:])
+    plot1.plot(t,mp)
+    plot1.plot(t,envmaxp,'--k')
+    plot1.plot(t,envminp,'--k')
+    plot1.plot(t,envmoyp,'r')
+    plot1.set_xticks([])
+    plot1.set_title('IMF {}; iteration {} before sifting'.format(k,nbit))
+    plot2 = fig.add_subplot(grid[1,:])
+    plot2.plot(t,m)
+    plot2.set_xticks([])
+    plot2.set_title('IMF {}; iteration {} after sifting'.format(k,nbit))
+    plot3 = fig.add_subplot(grid[2,:])
+    plot3.plot(t,r-m)
+    plot3.set_title('residue')
+    plt.show()
 
 def display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sb,sxp,sdt,sd2t,nbit,k,display_sifting,stop_sift):
     fig = plt.figure(figsize=(5,5))
@@ -303,7 +289,7 @@ def display_emd(t,m,mp,r,envminp,envmaxp,envmoyp,s,sb,sxp,sdt,sd2t,nbit,k,displa
     print('stop parameter mean value : {:.4f} before sifting and {:.4f} after'.format(sb,s))
     plt.show()
     
-def extr(x : np.ndarray, nargout : int = 2):
+def extr(x:np.ndarray,nargout:int=2):
     t = np.arange(0,len(x)) 
 
     m = len(x)
@@ -405,7 +391,7 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
             lsym = indmax[0]
         else:
             lmax = np.flipud(indmax[:min(indmax[-1],nbsym)]).flatten()
-            lmin = np.concatenate((np.flipud(indmin[:min(indmin[-1],nbsym-1)]),np.array([1])))
+            lmin = np.concatenate((np.flipud(indmin[:min(indmin[-1],nbsym-1)]),np.array([0])))
             lsym = 0
     else:
         if x[0] < x[indmax[0]]:
@@ -413,7 +399,7 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
             lmin = np.flipud(indmin[1:min(indmin[-1],nbsym+1)]).flatten()
             lsym = indmin[0]
         else:
-            lmax = np.concatenate((np.flipud(indmax[:min(indmax[-1],nbsym-1)]),np.array([1])))
+            lmax = np.concatenate((np.flipud(indmax[:min(indmax[-1],nbsym-1)]),np.array([0])))
             lmin = np.flipud(indmin[:min(indmin[-1],nbsym)]).flatten()
             lsym = 0
     
@@ -442,6 +428,7 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
     trmax = 2*t[rsym]-t[rmax]
     
     # in case symmetrized parts do not extend enough
+    #TODO: This section needs to be tested.
     if tlmin[0] > t[0] or tlmax[0] > t[0]:
         if lsym == indmax[0]:
             lmax = np.flipud(indmax[:min(indmax[-1],nbsym)])
@@ -455,9 +442,9 @@ def boundary_conditions(indmin : np.ndarray, indmax : np.ndarray, t : np.ndarray
     
     if trmin[-1] < t[lx] or trmax[-1] < t[lx]:
         if rsym == indmax[-1]:
-            rmax = np.flipud(indmax[max(indmax[-1]-nbsym+1,1):])
+            rmax = np.flipud(indmax[-1-nbsym+1:]) if indmax.size >= nbsym+1 else np.flipud(indmax[:])
         else:
-            rmin = np.flipud(indmin[max(indmin[-1]-nbsym+1,1):])
+            rmin = np.flipud(indmin[-1-nbsym+1:]) if indmin.size >= nbsym+1 else np.flipud(indmin[:])
         if rsym == lx:
             raise ValueError('bug')
         rsym = lx
@@ -502,17 +489,18 @@ def mean_and_amplitude(m : np.ndarray, t : np.ndarray, INTERP : str, MODE_COMPLE
 
     if MODE_COMPLEX:
         if MODE_COMPLEX == 1:
-            # do something
             for k in range(ndirs):
                 phi = k*np.pi/ndirs
                 y = np.real(np.exp(-1j*phi)*m)
                 indmin, indmax, indzer = extr(y, nargout=3) 
                 nem[k] = len(indmin) + len(indmax)
                 nzm[k] = len(indzer)
-                tmin, tmax, zmin, zmax = boundary_conditions(indmin, indmax, t, y, m, NBSYM)
-                envmin[k] = interp.interp1d(tmin,zmin,kind=INTERP)  
-                envmax[k] = interp.interp1d(tmax,zmax,kind=INTERP)
-            envmoy = np.mean((envmin-envmax)/2,axis=0)
+                (tmin, tmax, zmin, zmax) = boundary_conditions(indmin, indmax, t, y, m, NBSYM)
+                f = interp.interp1d(tmin,zmin,kind=INTERP)  
+                envmin[k] = f(t)
+                f = interp.interp1d(tmax,zmax,kind=INTERP)
+                envmax[k] = f(t)
+            envmoy = np.mean((envmin+envmax)/2,axis=0)
             if nargout > 3:
                 amp = np.mean(np.abs(envmax-envmin),axis=0)/2
         elif MODE_COMPLEX == 2:
@@ -547,8 +535,6 @@ def mean_and_amplitude(m : np.ndarray, t : np.ndarray, INTERP : str, MODE_COMPLE
             envmin = f(t)
             f = interp.interp1d(tmax,mmax,kind=INTERP)
             envmax = f(t)
-        # else, there should be no raise error as init(...) handles that.
-
         envmoy = (envmin+envmax)/2
         if nargout > 3:
             # expand dims needed for mean function.
@@ -594,7 +580,8 @@ def stop_sifting_fixe(t:np.ndarray,m:np.ndarray,INTERP:str,MODE_COMPLEX:int,ndir
     try:
         moyenne = mean_and_amplitude(m,t,INTERP,MODE_COMPLEX,ndirs,nargout=1)
         stop = 0
-    except:
+    except Exception as e:
+        print(e)
         moyenne = np.zeros((1,len(m)))
         stop = 1
     finally:
@@ -603,7 +590,12 @@ def stop_sifting_fixe(t:np.ndarray,m:np.ndarray,INTERP:str,MODE_COMPLEX:int,ndir
 def stop_sifting_fixe_h(t:np.ndarray,m:np.ndarray,INTERP:str,stop_count:int,FIXE_H:int,MODE_COMPLEX:int,ndirs:int,nargout:int=2):
     try:
         (moyenne,nem,nzm) = mean_and_amplitude(m,t,INTERP,MODE_COMPLEX,ndirs,nargout=3)
-        if all(abs(nzm-nem)>1):
+        if isinstance(nem,float):
+            nem = np.array(nem)
+        if isinstance(nzm,float):
+            nzm = np.array(nzm)
+        # Zip arrays together, get each pairs difference, take the absolute value, and check if all greater than one.
+        if (np.abs(np.diff(np.array(list(zip(nem,nzm))))) > 1).all():   
             stop = 0
             stop_count = 0
         else:
@@ -642,11 +634,13 @@ def io(x : np.ndarray, imf : np.ndarray):
 
 # Returns x,t,sd,sd2,tol,MODE_COMPLEX,ndirs,display_sifting,sdt,sd2t,r,imf,k,nbit,NbIt,MAXITERATIONS,FIXE,FIXE_H,MAXMODES,INTERP,mask
 def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,MAXMODES,INTERP,mask):
+    mask_signal=0
+    
     if not isinstance(x, np.ndarray):
         x = np.array(x)
 
     #default for t.
-    if t == 0:
+    if isinstance(t,int):
         t = np.arange(0,len(x))
 
     if x.ndim != 1:
@@ -677,31 +671,35 @@ def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,M
         raise TypeError('INTERP field must be linear, cubic, or spline')
 
     #special procedure when a masking signal is specified
-    #TODO: Make sure the mask option works for creating an IMF, also the function call will definitely need to be changed at some point.
-    if mask != 0:
-        if mask.ndim == 1 or mask.shape[0] != x.shape[0]:
+    if isinstance(mask,np.ndarray):
+        if mask.ndim != 1 or mask.shape[0] != x.shape[0]:
             raise TypeError('Masking signal must have the same dimension as the analyzed signal X')
+        mask_signal = mask
         mask = 0
-        imf1 = emd(x+mask,
+        imf1 = emd(x+mask_signal,
                     t=t,stop=stop,
                     ndirs=ndirs,
                     display_sifting=display_sifting,
                     MODE_COMPLEX=MODE_COMPLEX,
                     MAXITERATIONS=MAXITERATIONS,
-                    FIXE=FIXE,MAXMODES=MAXMODES,
+                    FIXE=FIXE,
+                    FIXE_H=FIXE_H,
+                    MAXMODES=MAXMODES,
                     INTERP=INTERP,
                     mask=mask)
-        imf2 = emd(x-mask,
+        imf2 = emd(x-mask_signal,
                     t=t,stop=stop,
                     ndirs=ndirs,
                     display_sifting=display_sifting,
                     MODE_COMPLEX=MODE_COMPLEX,
                     MAXITERATIONS=MAXITERATIONS,
-                    FIXE=FIXE,MAXMODES=MAXMODES,
+                    FIXE=FIXE,
+                    FIXE_H=FIXE_H,
+                    MAXMODES=MAXMODES,
                     INTERP=INTERP,
                     mask=mask)
         if imf1.shape[0] != imf2.shape[0]:
-            raise Warning('emd:warning, the two sets of IMFs have different sizes:', imf1, 'and', imf2, 'IMFs.')
+            warnings.warn('emd:warning, the two sets of IMFs have different sizes: {} and {} IMFs.'.format(imf1.shape[0],imf2.shape[0]))
         S1 = imf1.shape[0]
         S2 = imf2.shape[0]
         if S1 != S2:
@@ -709,15 +707,16 @@ def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,M
                 tmp = imf1
                 imf1 = imf2
                 imf2 = tmp
-            imf2[max(S1,S2)] = 0
+            # need some code here to append a certain number of rows to imf2.
+            row_gap = imf1.shape[0] - imf2.shape[0] # number of rows to add.
+            for i in range(row_gap):
+                imf2 = np.vstack((imf2,np.zeros(imf2.shape[1])))
         imf = (imf1+imf2)/2
 
     sd = stop[0]
     sd2 = stop[1]
     tol = stop[2]
-
     lx = x.shape[0]
-
     sdt = sd*np.ones(lx)
     sd2t = sd2*np.ones(lx)
 
@@ -740,14 +739,9 @@ def init(x,t,stop,ndirs,display_sifting,MODE_COMPLEX,MAXITERATIONS,FIXE,FIXE_H,M
     nbit=0
     NbIt=0
 
-    if not mask: # if a masking signal is specified "imf" already exists at this stage
+    if not isinstance(mask_signal,np.ndarray): # if a masking signal is specified "imf" already exists at this stage
         imf = np.array([])
+    else:
+        mask = mask_signal
 
     return (x,t,sd,sd2,tol,MODE_COMPLEX,ndirs,display_sifting,sdt,sd2t,r,imf,k,nbit,NbIt,MAXITERATIONS,FIXE,FIXE_H,MAXMODES,INTERP,mask)
-
-if __name__ == '__main__':
-    data_input = format_processor()
-    complex_ts = np.array(data_input[0][1:201]) + 1j
-    w = 0
-    emd = emd(data_input[0][1:201],nargout=1)
-    print("test")

@@ -1,5 +1,5 @@
 import numpy as np
-import Surrogation.Surr_PseudoPeriodic20210317 as pseudo
+import Surr_PseudoPeriodic20210317 as pseudo
 
 def Surr_findrho20210317(y,tau,dim):
     """

@@ -1,6 +1,6 @@
 import numpy as np
 from numpy import matlib
-from .Div_KL import Div_KL
+from Div_KL import Div_KL
 
 def Div_JS(P,Q):
     """
@@ -53,8 +53,8 @@ def Div_JS(P,Q):
         raise ValueError('The number of columns in P and Q should be the same')
 
     Q = np.divide(Q,np.sum(Q))
-    Q = matlib.repmat(Q, P.shape[1], 1)
-    P = np.divide(P,matlib.repmat(np.sum(P,axis=1),1,P.shape[1]))
+    Q = matlib.repmat(Q, P.shape[0], 1)
+    P = np.divide(P,matlib.repmat(np.sum(P,axis=1,keepdims=True),1,P.shape[1]))
 
     M = np.multiply(0.5,np.add(P,Q))
 

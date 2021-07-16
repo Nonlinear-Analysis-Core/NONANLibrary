@@ -168,7 +168,6 @@ def LyE_R20200806(X,Fs,tau,dim,*args):
         if np.sum(distanceM) != 0:
             AveLnDiv[i]=np.mean(np.log(distanceM[distanceM>0])) 
 
-    # NOTE: instead of adding to out every iteration of the loop we could just append a row at the end of this for loop.
     out = np.vstack((out,AveLnDiv))
 
     # Find LyES and LyEL
