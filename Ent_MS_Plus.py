@@ -1,6 +1,6 @@
 import numpy as np
 
-def Ent_MS_Plus20201001(x, tau, m, r):
+def Ent_MS_Plus(x, tau, m, r):
     """
     (RCMSE, CMSE, MSE, MSFE) = RCMS_Ent( x, tau, m, r )
     inputs - x, single column time seres

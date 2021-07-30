@@ -1,19 +1,24 @@
 function [crp, crpH] = RelPhase_Cont(data1,data2,samprate)
-% RELPHASE - calculates the relative phase between two segments, joint
-% angles, coordinates, etc.  It is calculated using the atan2 function in
-% order to preserve the quadrant in the phase portrait.  The sign of the
-% relative phase is determined from segment A - segment B.  If the sign is
-% negative, B leads A.  If the sign is positive, A leads B.
-%
-% Syntax:
-%       Calculate relative phase from position and velocity data
-%       rp = relphase(pa,va,pb,vb)
-%           pa - angle (or position) of segment A
-%           va - velocity of segment A
-%           pb - angle (or position) of segment B
-%           vb - velocity of segment B
-%           rp - relative phase in degrees
-%
+% [crp, crpH] = RelPhase_Cont(data1,data2,samprate)
+% inputs:  data1 - the first time series from which to calculate the
+%                    relative phase.
+%          data2 - the second time series from which to calculate the
+%                    relative phase.
+% outputs: crp - the continuous relative phase as calculated through a
+%                simple tangent angle.
+%          crpH - the continuous relative phase calculated through use of
+%                 Hilbert transforms.
+% Remarks
+% - calculates the relative phase between two time series. It is calculated
+%   using the atan2 function in order to preserve the quadrant in the phase
+%   portrait and also through Hilbert transforms. Using the Hilbert 
+%   transform method is recommended.
+% Future Work
+% - None.
+% Prior - unknown
+% Jul 2021 - Modified by Ben Senderling, bmchnonan@unomaha.edu
+%          - Most of the code was rewritten with different inputs and
+%            different calculations. The Hilbert transform was added.
 % Copyright 2020 Nonlinear Analysis Core, Center for Human Movement
 % Variability, University of Nebraska at Omaha
 %

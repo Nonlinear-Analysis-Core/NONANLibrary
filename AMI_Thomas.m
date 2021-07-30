@@ -1,12 +1,10 @@
 function [tau,AMI]=AMI_Thomas(x,L)
-
 % [tau,AMI]=AMI_Thomas(x,L)
 % inputs:    x - time series, vertically orientedtrc files selected by user
 %            L - Maximum lag to calculate AMI until
 % outputs:   tau - first true minimum of the AMI vs lag plot
 %            AMI - a vertically oriented vector containing values of AMI
 %            from a lag of 0 up the input L
-%
 % Remarks
 % - This code uses a published method of calculating AMI to find an 
 %   acceptable lag with which to perform phase space reconstruction.
@@ -19,17 +17,14 @@ function [tau,AMI]=AMI_Thomas(x,L)
 %   run for ever if a lag cannot be found.
 % - If it does find multiple values of tau but no definative minimum it
 %   will return all of these values.
-%
 % Future Work
 % - Further validation methods could be added below, but this code is
 %   pretty good.
-%
 % September 2015 - Adapted by Ben Senderling, email: bensenderling@gmail.com
 %                  Below I've set the code published by Thomas, Semple and
 %                  Strang to calculate AMI at various lags and to suggest
 %                  an appropriate tau.
-%
-%% Validation
+% Validation
 %
 % Damped oscillator (approximate tau ~ 33)
 %

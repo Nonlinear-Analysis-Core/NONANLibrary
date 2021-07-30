@@ -1,6 +1,6 @@
 import numpy as np
 
-def Ent_Samp20200723(data, m, r):
+def Ent_Samp(data, m, r):
   """
   function SE = Ent_Samp20200723(data,m,r)
   SE = Ent_Samp20200723(data,m,R) Returns the sample entropy value.
