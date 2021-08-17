@@ -1,4 +1,4 @@
-function varargout=AMI_Stergiou20210329(varargin)
+function varargout=AMI_Stergiou(varargin)
 % [tau,ami]=AMI_Stergiou20210329(data,L)
 % inputs    - data, single column array
 %           - L, maximal lag to which AMI will be calculated
