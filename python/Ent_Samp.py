@@ -74,9 +74,9 @@ def Ent_Samp(data, m, r):
     dj1 = np.max(dij,axis=1)
     d = np.where(dj <= R) 
     d1 = np.where(dj1 <= R)
-    nm = d[0].shape[0]
+    nm = d[0].shape[0]-1 # subtract the self match
     Bm[i] = nm/(N-m)
-    nm1 = d1[0].shape[0]
+    nm1 = d1[0].shape[0]-1 # subtract the self match
     Am[i] = nm1/(N-m)
   
   Bmr = np.sum(Bm)/(N-m)
