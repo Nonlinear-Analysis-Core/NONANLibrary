@@ -6,7 +6,7 @@ from scipy import stats as st
 from scipy.spatial import distance as spd
 import matplotlib.pyplot as plt
 
-def RQA20210210(DATA,TYPE,EMB,DEL,ZSCORE,NORM,LINELENGTH,SETPARA,SETVALUE,PLOTOPTION,nargout):
+def RQA(DATA,TYPE,EMB,DEL,ZSCORE,NORM,LINELENGTH,SETPARA,SETVALUE,PLOTOPTION,nargout):
     """
     Usage: (RP, RESULTS)=RQA20210210(DATA,TYPE,EMB,DEL,ZSCORE,NORM,LINELENGTH,SETPARA,SETVALUE,PLOTOPTION)
     Inputs  - DATA, a double-variable with each dimension of the

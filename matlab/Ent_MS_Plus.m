@@ -1,4 +1,4 @@
-function [ RCMSE, CMSE, MSE, MSFE, GMSE ] = Ent_MS_Plus20201001( x, tau, m, r )
+function [ RCMSE, CMSE, MSE, MSFE, GMSE ] = Ent_MS_Plus( x, tau, m, r )
 % [ RCMSE, CMSE, MSE, MSFE ] = RCMS_Ent( x, tau, m, r )
 % inputs - x, single column time seres
 %        - tau, greatest scale factor

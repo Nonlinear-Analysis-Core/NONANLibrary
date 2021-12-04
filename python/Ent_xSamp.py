@@ -1,6 +1,6 @@
 import numpy as np
 
-def Ent_xSamp20180320(x,y,m,R,norm):
+def Ent_xSamp(x,y,m,R,norm):
     """
     xSE = Ent_xSamp20180320(x,y,m,R,norm)
     Inputs - x, first data series

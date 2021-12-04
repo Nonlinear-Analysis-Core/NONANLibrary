@@ -7,7 +7,7 @@ import copy
 import warnings
 
 
-def LyE_W20200820(x, Fs, tau, dim, evolve):
+def LyE_W(x, Fs, tau, dim, evolve):
   """
 % inputs  - x, time series
 %         - Fs, sampling frequency

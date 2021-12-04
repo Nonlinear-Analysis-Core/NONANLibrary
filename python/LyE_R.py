@@ -3,7 +3,7 @@ import numpy.polynomial.polynomial as poly
 import matplotlib.pyplot as plt
 import sys
 
-def LyE_R20200806(X,Fs,tau,dim,*args):
+def LyE_R(X,Fs,tau,dim,*args):
     """
     % [out]=LyE_R20200619(X,Fs,tau,dim)
     % inputs  - X, If this is a single dimentional array the code will use tau

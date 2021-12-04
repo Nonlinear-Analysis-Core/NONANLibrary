@@ -1,4 +1,4 @@
-function [ FR,PC,DRP ] = RelPhase_Disc20180320( S1, S2, varargin )
+function [ FR,PC,DRP ] = RelPhase_Disc( S1, S2, varargin )
 % [ FR,PC,DRP ] = RelPhase_Disc20180320( S1, S2, S1_events, S2_events )
 % inputs    - S1, Signal 1 must be the lower frequency signal.
 %           - S2, Signal 2 must be the higher frequency signal.

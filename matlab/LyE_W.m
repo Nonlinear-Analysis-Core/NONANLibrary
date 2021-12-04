@@ -1,5 +1,5 @@
 function [out,LyE] = LyE_W(X,Fs,tau,dim,evolve,varargin)
-%% [out,LyE] = LyE_W20200820(X,Fs,tau,dim,evolve)
+%% [out,LyE] = LyE_W(X,Fs,tau,dim,evolve)
 % inputs  - X, time series
 %         - Fs, sampling frequency
 %         - tau, time lag

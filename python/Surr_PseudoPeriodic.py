@@ -1,6 +1,6 @@
 import numpy as np
 
-def Surr_PseudoPeriodic20210317(y,tau,dim,rho):
+def Surr_PseudoPeriodic(y,tau,dim,rho):
     """
     inputs  - y, time series
             - tau, time lag for phase space reconstruction

@@ -1,4 +1,4 @@
-function z =Surr_Theiler20200723(y,algorithm)
+function z =Surr_Theiler(y,algorithm)
 % z=Surr_Theiler20200723(y,algorithm)
 % inputs  - y, time series to be surrogated
 %              algorithm - the type of algorithm to be completed

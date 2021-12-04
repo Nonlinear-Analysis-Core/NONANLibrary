@@ -1,6 +1,6 @@
 import numpy as np
 
-def Ent_Symbolic20180320(X, L):
+def Ent_Symbolic(X, L):
     """
     SymEnt = Ent_Symbolic20180320(X, L)
     symbolicEnt Calculates the Symbolic Entropy for given data.

@@ -1,4 +1,4 @@
-function [varargout]=LyE_R20200806(X,Fs,tau,dim,varargin)
+function [varargout]=LyE_R(X,Fs,tau,dim,varargin)
 % [out]=LyE_R20200619(X,Fs,tau,dim)
 % inputs  - X, If this is a single dimentional array the code will use tau
 %              and dim to perform a phase space reconstruction. If this is

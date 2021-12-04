@@ -1,6 +1,6 @@
 import numpy as np
 
-def FNN20200714(data, tau, MaxDim, Rtol, Atol, speed):
+def FNN(data, tau, MaxDim, Rtol, Atol, speed):
   """
     data - column oriented time series
     tau - time delay

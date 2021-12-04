@@ -1,7 +1,7 @@
 import numpy as np
-import Surr_PseudoPeriodic20210317 as pseudo
+import Surr_PseudoPeriodic as pseudo
 
-def Surr_findrho20210317(y,tau,dim):
+def Surr_findrho(y,tau,dim):
     """
     rho=Surr_findrho20200626(y,tau,dim)
     inputs  - y, time series

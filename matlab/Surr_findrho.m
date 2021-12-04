@@ -1,4 +1,4 @@
-function [rho,out]=Surr_findrho20200630(y,tau,dim)
+function [rho,out]=Surr_findrho(y,tau,dim)
 % rho=Surr_findrho20200626(y,tau,dim)
 % inputs  - y, time series
 %         - tau, time lag for phase space reconstruction
