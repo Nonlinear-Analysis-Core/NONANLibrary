@@ -74,14 +74,14 @@ dbstop if error
 %% Find upper bound for binary search
 
 rhoH=1;
-[~,yi]=Surr_PseudoPeriodic20200630(y,tau,dim,rhoH);
+[~,yi]=Surr_PseudoPeriodic(y,tau,dim,rhoH);
 diH=findrho_di(yi,2);
 out(1,1:3)=[1,rhoH,diH];
 
 %% Find lower bound for the binary search
 
 rhoL=0.1;
-[~,yi]=Surr_PseudoPeriodic20200630(y,tau,dim,rhoL);
+[~,yi]=Surr_PseudoPeriodic(y,tau,dim,rhoL);
 diL=findrho_di(yi,2);
 out(2,1:3)=[2,rhoL,diL];
 
@@ -101,7 +101,7 @@ ind=3;
 
 while abs(rhoH-rhoL)/rhoL>precision
     rhoi=(rhoH+rhoL)/2;
-    [~,yi]=Surr_PseudoPeriodic20200630(y,tau,dim,rhoi);
+    [~,yi]=Surr_PseudoPeriodic(y,tau,dim,rhoi);
     di=findrho_di(yi,2);
     out(ind,1:3)=[ind,rhoi,di];
     ind=ind+1;
