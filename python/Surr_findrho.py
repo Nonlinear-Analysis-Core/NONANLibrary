@@ -76,7 +76,7 @@ def Surr_findrho(y,tau,dim):
     # Find upper bound for binary search
 
     rhoH=2.
-    (_,yi)=pseudo.Surr_PseudoPeriodic20210317(y,tau,dim,rhoH)
+    (_,yi)=pseudo.Surr_PseudoPeriodic(y,tau,dim,rhoH)
     diH=findrho_di(yi,2)
 
     out = np.array([1,rhoH,diH])
@@ -84,7 +84,7 @@ def Surr_findrho(y,tau,dim):
     # Find lower bound for the binary search
 
     rhoL=0.1
-    (_,yi)=pseudo.Surr_PseudoPeriodic20210317(y,tau,dim,rhoL)
+    (_,yi)=pseudo.Surr_PseudoPeriodic(y,tau,dim,rhoL)
     diL=findrho_di(yi,2)
     out = np.vstack((out, np.array([2,rhoL,diL])))
 
@@ -106,7 +106,7 @@ def Surr_findrho(y,tau,dim):
 
     while abs(rhoH - rhoL) / rhoL > precision:
         rhoi = (rhoH+rhoL)/2
-        (_,yi) = pseudo.Surr_PseudoPeriodic20210317(y,tau,dim,rhoi)
+        (_,yi) = pseudo.Surr_PseudoPeriodic(y,tau,dim,rhoi)
         di=findrho_di(yi,2)
         out = np.vstack((out,np.array([ind,rhoi,di])))
         ind=ind+1
