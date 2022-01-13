@@ -100,7 +100,7 @@ if abs(algorithm)==2
     [~,yyii] = sort(yyi);
     for k=1:c
         z(:,k) = sx(yyii(:,k));
-    end;
+    end
 else
     z= yy;
 end

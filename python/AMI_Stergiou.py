@@ -1,9 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 import sys
-from typing import Union
 
-def AMI_Stergiou(data : np.ndarray, L : Union[int,np.ndarray,list], *argv) -> Union[float,tuple(np.ndarray,np.ndarray)]:
+def AMI_Stergiou(data, L, *argv):
     """
     inputs    - data, column oriented time series
               - L, maximal lag to which AMI will be calculated
