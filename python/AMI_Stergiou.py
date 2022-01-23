@@ -2,12 +2,23 @@ import numpy as np
 import scipy.sparse as sp
 import sys
 
-def AMI_Stergiou(data, L, *argv):
+def AMI_Stergiou(data, L, to_matlab = False, n_bins = 0):
     """
     inputs    - data, column oriented time series
               - L, maximal lag to which AMI will be calculated
               - bins, number of bins to use in the calculation, if empty an
                 adaptive formula will be used
+              - to_matlab, an option for MATLAB users of the code, if MATLAB
+                datatypes are needed for output, use this to have them
+                returned with proper types. Default is false. 
+                
+                Only use if you have 'matlab.engine' installed in your current 
+                Python env.
+
+                Note: this cannot be installed through the usual conda or pip
+                commands, search online to view resources to help in installing
+                'matlab.engine' for Python.
+
     outputs   - tau, first minimum in the AMI vs lag plot
               - v_AMI, vector of AMI values and associated lags
     
@@ -83,10 +94,10 @@ def AMI_Stergiou(data, L, *argv):
 
       data = np.array(data)
 
-      if len(argv) == 0:
+      if n_bins == 0:
         bins = np.ceil((np.max(data) - np.min(data))/(3.49 * np.nanstd(data * N**(-1/3), axis=0)))
       else:
-        bins = argv[0]
+        bins = n_bins
       
       bins = int(bins) 
 
@@ -117,7 +128,7 @@ def AMI_Stergiou(data, L, *argv):
       tau = np.array(np.full((L,2),-1,dtype=float))
 
       j = 0
-      for i in range(v.shape[1]):                       # Finds first minimum
+      for i in range(v.shape[1] - 1):                       # Finds first minimum
         if v[1,i-1]>=v[1,i] and v[1,i]<=v[1,i+1]: 
           ami = v[1,i]
           tau[j,:] = np.array([i,ami])
@@ -126,20 +137,12 @@ def AMI_Stergiou(data, L, *argv):
       tau = tau[:j]   # only include filled in data.
 
       initial_AMI = v[1,0]
-      
       for i in range(v.shape[1]):                       # Finds first AMI value that is 20% initial AMI
         if v[1,i] < (0.2*initial_AMI):
           tau[0,1] = i
           break
 
       v_AMI=v
-
-      if len(tau) == 0:      
-        if L*1.5 > len(data/3):
-          tau[0] = 9999
-        else:
-          print('Max lag needed to be increased for AMI_Stergiou\n')
-          (tau, v_AMI) = AMI_Stergiou(data,np.floor(L*1.5))    #Recursive call
 
       return (tau, v_AMI)
     elif isinstance(L, np.ndarray) or isinstance(L, list):
@@ -169,8 +172,12 @@ def AMI_Stergiou(data, L, *argv):
       (A, B) = np.nonzero(pAB)
       AB = pAB.data
       ami = np.sum(np.multiply(AB,np.log2(np.divide(AB,np.multiply(pA[A],pB[B])))))
-
-      return ami
+      
+      if to_matlab:
+        import matlab
+        return ami
+      else:
+        return ami
     else:
       raise ValueError('Invalid input, read documentation for input options.')
 
