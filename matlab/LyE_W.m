@@ -1,7 +1,7 @@
 function [out,LyE] = LyE_W(X,Fs,tau,dim,evolve,varargin)
 %% [out,LyE] = LyE_W(X,Fs,tau,dim,evolve)
 % inputs  - X, time series
-%         - Fs, sampling frequency
+%         - Fs, sampling frequency (Hz)
 %         - tau, time lag
 %         - dim, embedding dimension
 %         - evolve, parameter of the same name from Wolf's 1985 paper. This
