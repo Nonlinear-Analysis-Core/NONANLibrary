@@ -9,8 +9,11 @@ To download this library, click on the green dropdown box that says "Code" and c
 There are no known incompatibilities using MATLAB version R2019a.
 
 MATLAB Toolboxes Required:
+
   Statistics and Machine Learning Toolbox
+  
   Signal Processing Toolbox
+  
   Image Processing Toolbox
 
 ### PYTHON VERSION
