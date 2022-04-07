@@ -1,14 +1,20 @@
 # NONANToolbox
 
-INSTALLATION
+## INSTALLATION
 
 To download this library, click on the green dropdown box that says "Code" and click on "Download ZIP". Once the ZIP file has downloaded, you will have to extract the files from that ZIP folder. Once the files are extracted, they will be available for your use.
 
-MATLAB VERSION
+### MATLAB VERSION
 
 There are no known incompatibilities using MATLAB version R2019a.
 
-PYTHON VERSION
+MATLAB Toolboxes Required:
+  Statistics and Machine Learning Toolbox
+  Signal Processing Toolbox
+  Image Processing Toolbox
+
+### PYTHON VERSION
+
 Libaries and the versions used:
 
 Python=3.8.8
@@ -19,7 +25,7 @@ scikit-image=0.18.1
 scikit-learn=0.24.1           
 
 
-FILES
+### FILES
 
 This is a list of the included functions and the full name of the methods.
 
