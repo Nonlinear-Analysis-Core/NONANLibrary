@@ -221,15 +221,15 @@ function y = linear_depth(feet, toes)
 % all sum combinations of their rows. 
 % feet and toes have the same number of columns 
 if size(feet, 2) == size(toes, 2) 
-a = size(feet, 1); 
-b = size(toes, 1); 
-Blocks = zeros(a*b, size(toes, 2)); 
-Bricks = Blocks; 
-for i = 1:a 
-Blocks((i-1)*b + 1: i*b,:) = Extended(feet(i,:),b); 
-Bricks((i-1)*b + 1: i*b,:) = toes; 
-i = i + 1; 
-end 
+    a = size(feet, 1); 
+    b = size(toes, 1); 
+    Blocks = zeros(a*b, size(toes, 2)); 
+    Bricks = Blocks; 
+    for i = 1:a 
+        Blocks((i-1)*b + 1: i*b,:) = Extended(feet(i,:),b); 
+        Bricks((i-1)*b + 1: i*b,:) = toes; 
+        i = i + 1; 
+    end 
 end 
 y = Blocks + Bricks; 
 
@@ -242,17 +242,17 @@ function y = Extended(vector,n)
 % Else, it returns the original input. 
 M = vector; 
 if size(vector,1) == 1 
-M = zeros(n,length(vector)); 
-for i = 1:n 
-M(i,:) = vector; 
-i = i + 1; 
-end 
+    M = zeros(n,length(vector)); 
+    for i = 1:n 
+        M(i,:) = vector; 
+        i = i + 1; 
+    end 
 end 
 if size(vector,2) == 1 
-M = zeros(length(vector),n); 
-for i = 1:n 
-M(:,i) = vector; 
-i = i + 1; 
-end 
+    M = zeros(length(vector),n); 
+    for i = 1:n 
+        M(:,i) = vector; 
+        i = i + 1; 
+    end 
 end 
 y = M;
