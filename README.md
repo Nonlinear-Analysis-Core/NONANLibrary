@@ -25,7 +25,21 @@ NumPy=1.20.1
 SciPy=1.6.2
 Numba=0.53.1
 scikit-image=0.18.1           
-scikit-learn=0.24.1           
+scikit-learn=0.24.1      
+
+To install from the requirements.txt file, make sure you have the package installer for Python (pip) on your PATH, and use the following command:
+
+```
+pip install -r requirements.txt
+```
+
+If you are installing using pip3, then simply use the command:
+
+```
+pip3 install -r requirements.txt
+```
+
+After installing these libraries, the Python scripts are available for use.
 
 
 ### FILES
