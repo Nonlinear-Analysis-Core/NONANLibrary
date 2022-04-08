@@ -5,104 +5,73 @@ import sys
 
 def LyE_R(X,Fs,tau,dim,*args):
     """
-    % [out]=LyE_R20200619(X,Fs,tau,dim)
-    % inputs  - X, If this is a single dimentional array the code will use tau
-    %              and dim to perform a phase space reconstruction. If this is
-    %              a multidimentional array the phase space reconstruction will
-    %              not be used.
-    %         - Fs, sampling frequency in units s^-1
-    %         - tau, time lag
-    %         - dim, embedding dimension
-    % outputs - out, contains the starting matched pairs and the average line
-    %                divergence from which the slope is calculated. The matched
-    %                paris are columns 1 and 2. The average line divergence is
-    %                column 3.
-    % [LyES,LyEL,out]=LyE_Rosenstein_FC(X,Fs,tau,dim,slope,MeanPeriod,plot)
-    % inputs  - slope, a four element array with the number of periods to find
-    %                  the regression lines for the short and long LyE. This is
-    %                  converted to indexes in the code.
-    %         - MeanPeriod, used in the slope calculation to find the short and
-    %                       long Lyapunov Exponents.
-    %         - plot, a boolean specifying if a figure should be created
-    %                 displaying the regression lines. This figure is visible
-    %                 by default.
-    % outputs - LyES, short/local lyapunov exponent
-    %         - LyEL, long/orbital lyapunov exponent
-    % Remarks
-    % - This code is based on the algorithm presented by Rosenstein et al,
-    %   1992.
-    % - Recommendations for the slope input can be found in the references
-    %   below. It is possible a long term exponent can not be found with your
-    %   inputs. If your selection exceeds the length of the data LyEL will
-    %   return as a NaN.
-    % Future Work
-    % - It may be possible to sped it up conciderably by re-organizing the for
-    %   loops. A database for the matched points would need to be created.
-    % References
-    % - Rosentein, Collins and De Luca; "A practical method for calculating
-    %   largest Lyapunov exponents from small data sets;" 1992
-    % - Yang and Pai; "Can stability really predict an impending slip-related
-    %   fall among older adults?", 2014
-    % - Brujin, van Dieen, Meijer, Beek; "Statistical precision and sensitivity
-    %   of measures of dynamic gait stability," 2009
-    % - Dingwell, Cusumano; "Nonlinear time series analysis of normal and
-    %   pathological human walking," 2000
-    % Version History
-    % Jun 2008 - Created by Fabian Cignetti
-    %          - It is suspected this code was originally written by Fabian
-    %            Cignetti
-    % Apr 2017 - Revised by Ben Senderling
-    %          - Added comments section. Automated slope calculation. Added
-    %            calculation of orbital exponent.
-    % Jun 2020 - Revised by Ben Senderling
-    %          - Incorporated the subroutines directly into the code since they
-    %            were only used in one location. Converted various for loops
-    %            into indexed operations. This significantly improved the
-    %            speed. Added if statements to compensate for errors with the
-    %            orbital LyE. If the data is such an orbital LyE would not be
-    %            found with the hardcoded regression line bounds. Made this 
-    %            slope and the file input optional. Removed the MeanPeriod as 
-    %            an imput and made it a calculation in the code. Added the out
-    %            array so the matched pairs and average line distance can be
-    %            reviewed, or used to finf the slope. Removed the progress
-    %            output to the command window since it was sped up
-    %            conciderably. Edited the figure output. Added code that allows
-    %            a multivariable input to be entered as X.
-    % Aug 2020 - Revised by Ben Senderling
-    %          - Removed mean period calculation and turned it into an input.
-    %            This varies too widely between time series to have it
-    %            automatically calculated in the script. It was replaced with
-    %            tau to find paired points.
-    % Copyright 2020 Nonlinear Analysis Core, Center for Human Movement
-    % Variability, University of Nebraska at Omaha
-    %
-    % Redistribution and use in source and binary forms, with or without 
-    % modification, are permitted provided that the following conditions are 
-    % met:
-    %
-    % 1. Redistributions of source code must retain the above copyright notice,
-    %    this list of conditions and the following disclaimer.
-    %
-    % 2. Redistributions in binary form must reproduce the above copyright 
-    %    notice, this list of conditions and the following disclaimer in the 
-    %    documentation and/or other materials provided with the distribution.
-    %
-    % 3. Neither the name of the copyright holder nor the names of its 
-    %    contributors may be used to endorse or promote products derived from 
-    %    this software without specific prior written permission.
-    %
-    % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-    % IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-    % THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
-    % PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
-    % CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-    % EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-    % PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-    % PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-    % LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-    % NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-    % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-    %%
+      inputs  - X, If this is a single dimentional array the code will use tau
+                   and dim to perform a phase space reconstruction. If this is
+                   a multidimentional array the phase space reconstruction will
+                   not be used.
+              - Fs, sampling frequency in units s^-1
+              - tau, time lag
+              - dim, embedding dimension
+      outputs - out, contains the starting matched pairs and the average line
+                     divergence from which the slope is calculated. The matched
+                     paris are columns 1 and 2. The average line divergence is
+                     column 3.
+      [LyES,LyEL,out]=LyE_Rosenstein_FC(X,Fs,tau,dim,slope,MeanPeriod,plot)
+     inputs  - slope, a four element array with the number of periods to find
+                       the regression lines for the short and long LyE. This is
+                       converted to indexes in the code.
+              - MeanPeriod, used in the slope calculation to find the short and
+                            long Lyapunov Exponents.
+              - plot, a boolean specifying if a figure should be created
+                      displaying the regression lines. This figure is visible
+                      by default.
+      outputs - LyES, short/local lyapunov exponent
+              - LyEL, long/orbital lyapunov exponent
+      Remarks
+      - This code is based on the algorithm presented by Rosenstein et al,
+        1992.
+      - Recommendations for the slope input can be found in the references
+        below. It is possible a long term exponent can not be found with your
+        inputs. If your selection exceeds the length of the data LyEL will
+        return as a NaN.
+      Future Work
+      - It may be possible to sped it up conciderably by re-organizing the for
+        loops. A database for the matched points would need to be created.
+      References
+      - Rosentein, Collins and De Luca; "A practical method for calculating
+        largest Lyapunov exponents from small data sets;" 1992
+      - Yang and Pai; "Can stability really predict an impending slip-related
+        fall among older adults?", 2014
+      - Brujin, van Dieen, Meijer, Beek; "Statistical precision and sensitivity
+        of measures of dynamic gait stability," 2009
+      - Dingwell, Cusumano; "Nonlinear time series analysis of normal and
+        pathological human walking," 2000
+      Version History
+      Jun 2008 - Created by Fabian Cignetti
+               - It is suspected this code was originally written by Fabian
+                 Cignetti
+      Apr 2017 - Revised by Ben Senderling
+               - Added comments section. Automated slope calculation. Added
+                 calculation of orbital exponent.
+      Jun 2020 - Revised by Ben Senderling
+               - Incorporated the subroutines directly into the code since they
+                 were only used in one location. Converted various for loops
+                 into indexed operations. This significantly improved the
+                 speed. Added if statements to compensate for errors with the
+                 orbital LyE. If the data is such an orbital LyE would not be
+                 found with the hardcoded regression line bounds. Made this 
+                 slope and the file input optional. Removed the MeanPeriod as 
+                 an imput and made it a calculation in the code. Added the out
+                 array so the matched pairs and average line distance can be
+                 reviewed, or used to finf the slope. Removed the progress
+                 output to the command window since it was sped up
+                 conciderably. Edited the figure output. Added code that allows
+                 a multivariable input to be entered as X.
+      Aug 2020 - Revised by Ben Senderling
+               - Removed mean period calculation and turned it into an input.
+                 This varies too widely between time series to have it
+                 automatically calculated in the script. It was replaced with
+                 tau to find paired points.
     """
     # Checked that X is vertically oriented. If X is a single or multiple
     # dimentional array the length is assumed to be longer than the width. It

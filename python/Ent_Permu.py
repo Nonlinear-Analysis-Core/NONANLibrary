@@ -27,20 +27,22 @@ def Ent_Permu(data, m, tau):
     Jun 2016 - Created by Patrick Meng-Frecker, unonbcf@unomaha.edu
     Dec 2016 - Edited by Casey Wiens, email: unonbcf@unomaha.edu
     """
+    def permutation_search(data, m, tau, N):
+      permDict = dict()
+      for cnt1 in range(N-tau*(m-1)):  # steps from 1 through length of data minus time delay multiplied by order minus 1
+          permVal = np.argsort(data[cnt1:cnt1+tau*(m-1)+1:tau]).astype(str) # creates permutation of selected data range
+          permVal = ''.join(permVal)  # concatenate array together as a string with no delimiter
+          if permVal not in permDict:
+              permDict[permVal] = 1
+          else:
+              permDict[permVal] += 1
+      return np.array(list(permDict.values()))
+    
     N = len(data)  # length of time series
     hist = permutation_search(data,m,tau,N)
     per = hist/np.sum(hist)	# ratio of each permutation vector match to total matches
     permEnt = np.negative(np.sum(np.multiply(per, np.log2(per))))   # performs entropy calucation
     return (permEnt, hist)
 
-def permutation_search(data, m, tau, N):
-    permDict = dict()
-    for cnt1 in range(N-tau*(m-1)):  # steps from 1 through length of data minus time delay multiplied by order minus 1
-        permVal = np.argsort(data[cnt1:cnt1+tau*(m-1)+1:tau]).astype(str) # creates permutation of selected data range
-        permVal = ''.join(permVal)  # concatenate array together as a string with no delimiter
-        if permVal not in permDict:
-            permDict[permVal] = 1
-        else:
-            permDict[permVal] += 1
-    return np.array(list(permDict.values()))
+
 

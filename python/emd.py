@@ -3,7 +3,6 @@ import warnings
 import numpy as np
 import scipy.interpolate as interp
 import matplotlib.pyplot as plt
-from format_processor import format_processor
 
 def emd(x, t = 0, stop = np.array([0.05,0.5,0.05]), ndirs = 4, display_sifting = 0, MODE_COMPLEX = 2, MAXITERATIONS = 2000, 
 FIXE = 0, FIXE_H = 0, MAXMODES = 0, INTERP = 'cubic', mask = 0, nargout = 1):

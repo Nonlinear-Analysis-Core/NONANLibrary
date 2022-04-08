@@ -1,11 +1,8 @@
 import numpy as np
 import timeit as ti
-from numba import jit,prange
 from scipy import stats
 from typing import Union
 import os
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-os.environ["NUMBA_CACHE_DIR"]=os.getcwd()
 
 def AMI_Thomas(x : np.ndarray, L : Union[int,np.ndarray,list]) -> Union[np.ndarray,float]:
     """
@@ -211,18 +208,16 @@ def bivariate_kernel_density(value : np.ndarray, data : np.ndarray, Hone : float
     return bivariate_kernel_density_sub(n,prob,number_pts)
 
 
-@jit(nopython=True,cache=True,nogil=True)
 def bivariate_kernel_density_sub(n,prob,number_pts):
     cumprob = np.cumsum(prob)
     y = np.zeros(number_pts)
     y[0] = (1/n)*cumprob[n-1]
-    for i in prange(1,number_pts):
+    for i in range(1,number_pts):
         index = n*(i+1)
         y[i] = (1/n)*(cumprob[index-1]-cumprob[index-n-1])
     y = y.T.copy()
     return y
 
-@jit(nopython=True,cache=True,nogil=True)
 def linear_depth(feet : np.ndarray, toes : np.ndarray) -> np.ndarray:
     """
     linear_depth takes a matrix ‘feet’ and lengthens 
@@ -244,7 +239,6 @@ def linear_depth(feet : np.ndarray, toes : np.ndarray) -> np.ndarray:
     y = blocks + bricks 
     return y
 
-@jit(nopython=True,cache=True,nogil=True)
 def extended(vector : np.ndarray, n : int, vertical : bool) -> np.ndarray:
     """
     Takes an m-dimensional row vector and outputs an 

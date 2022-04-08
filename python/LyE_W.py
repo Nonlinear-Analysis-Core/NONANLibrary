@@ -1,5 +1,4 @@
 import numpy as np
-#from numba import jit maybe later
 import numpy.matlib as matlib
 import numpy.linalg as linalg
 import sys # to implement args later
@@ -9,87 +8,58 @@ import warnings
 
 def LyE_W(x, Fs, tau, dim, evolve):
   """
-% inputs  - x, time series
-%         - Fs, sampling frequency
-%         - tau, time lag
-%         - dim, embedding dimension
-%         - evolve, parameter of the same name from Wolf's 1985 paper. This
-%           code expects a number of frames as an input.
-% outputs - out, matrix detailing variables at each iteration
-%         - LyE, largest lyapunov exponent
-%% [out,LyE] = LyE_W20200820(X,Fs,tau,dim,evolve,SCALEMX,SCALEMN,ANGLMX,ZMULT)
-%         - SCALEMX, length of which the local structure of the attractor
-%           is no longer being probed
-%         - SCALEMN, length below which noise predominates the attractors
-%           behavior
-%         - ANGLMX, maximum angle used to constrain replacements
-%         - ZMULT, multiplier used to increase SCALEMX, unused in the
-%           current version of the code
-% Remarks
-% - This code calculates the largest lyapunov exponent of a time series
-%   according to the algorithm detailed in Wolf's 1985 paper. This code has
-%   been aligned with his code published on the Matlab file exchange in
-%   2016. It will largely find the same replacement points, the remaining
-%   difference being in the replacement algorithm.
-% - The varargin can be used to specify some of the secondary parameters in
-%   the algorithm. All of the extra arguements must be specified if any are
-%   to be specified at all. Otherwise defaults are used.
-% - ZMULT is not currently used in the code but was in a previous version.
-%   Its place in the subroutine inputs and outputs was kept in case it is
-%   put back in.
-% - It should be noted that the process in the searching algorithm has a
-%   significant impact on the resulting LyE.
-% - The code expects evolve to be the number of frames to use but we
-%   encourage you to report this as a time-value in publications.
-% Prior - Created by Shane Wurdeman, unonbcf@unomaha.edu
-%       - Adapted by Brian Knarr, unonbcf@unomaha.edu
-%       - The code previously was influenced heavily by the FORTRAN syntax
-%         published in Wolf's 1985 paper. These were modified to better
-%         take advantage of MATLAB and speed up the code.
-% Mar 2017 - Modified by Ben Senderling, unonbcf@unomaha.edu
-%          - Changed parameter "n" to "evolve."
-%          - Changed "ZMULT" back to 1.
-%          - Aligned the code with Wolf's Matlab File Exchange submission
-%            to find the same replacement points. This is now essential his
-%            algorithm but retains the speed of previous versions.
-% Apr 2019 - Modified by Ben Senderling, unonbcf@unomaha.edu
-%          - Changed line 'range_exclude = range_exclude(range_exclude>=1 &
-%            range_exclude<=NPT);' to say '>=1' instead of '>1' to prevent
-%            self matches with the first point. This was indirectly
-%            accounted for by setting distances less than SCALEMN to 0.
-%          - '<SCALEMN' was removed from the code entirely and replaced with a
-%            '<=0'. This was checked against joint angles and EMG data. The
-%            change did not result in different pairs. This also removes an
-%            input.
-% Copyright 2020 Nonlinear Analysis Core, Center for Human Movement
-% Variability, University of Nebraska at Omaha
-%
-% Redistribution and use in source and binary forms, with or without 
-% modification, are permitted provided that the following conditions are 
-% met:
-%
-% 1. Redistributions of source code must retain the above copyright notice,
-%    this list of conditions and the following disclaimer.
-%
-% 2. Redistributions in binary form must reproduce the above copyright 
-%    notice, this list of conditions and the following disclaimer in the 
-%    documentation and/or other materials provided with the distribution.
-%
-% 3. Neither the name of the copyright holder nor the names of its 
-%    contributors may be used to endorse or promote products derived from 
-%    this software without specific prior written permission.
-%
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-% IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-% THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
-% PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
-% CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-% EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-% PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-% PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-% LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-% NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  inputs  - x, time series
+          - Fs, sampling frequency
+          - tau, time lag
+          - dim, embedding dimension
+          - evolve, parameter of the same name from Wolf's 1985 paper. This
+            code expects a number of frames as an input.
+  outputs - out, matrix detailing variables at each iteration
+          - LyE, largest lyapunov exponent
+  [out,LyE] = LyE_W20200820(X,Fs,tau,dim,evolve,SCALEMX,SCALEMN,ANGLMX,ZMULT)
+          - SCALEMX, length of which the local structure of the attractor
+            is no longer being probed
+          - SCALEMN, length below which noise predominates the attractors
+            behavior
+          - ANGLMX, maximum angle used to constrain replacements
+          - ZMULT, multiplier used to increase SCALEMX, unused in the
+            current version of the code
+  Remarks
+  - This code calculates the largest lyapunov exponent of a time series
+    according to the algorithm detailed in Wolf's 1985 paper. This code has
+    been aligned with his code published on the Matlab file exchange in
+    2016. It will largely find the same replacement points, the remaining
+    difference being in the replacement algorithm.
+  - The varargin can be used to specify some of the secondary parameters in
+    the algorithm. All of the extra arguements must be specified if any are
+    to be specified at all. Otherwise defaults are used.
+  - ZMULT is not currently used in the code but was in a previous version.
+    Its place in the subroutine inputs and outputs was kept in case it is
+    put back in.
+  - It should be noted that the process in the searching algorithm has a
+    significant impact on the resulting LyE.
+  - The code expects evolve to be the number of frames to use but we
+    encourage you to report this as a time-value in publications.
+  Prior - Created by Shane Wurdeman, unonbcf@unomaha.edu
+        - Adapted by Brian Knarr, unonbcf@unomaha.edu
+        - The code previously was influenced heavily by the FORTRAN syntax
+          published in Wolf's 1985 paper. These were modified to better
+          take advantage of MATLAB and speed up the code.
+  Mar 2017 - Modified by Ben Senderling, unonbcf@unomaha.edu
+           - Changed parameter "n" to "evolve."
+           - Changed "ZMULT" back to 1.
+           - Aligned the code with Wolf's Matlab File Exchange submission
+             to find the same replacement points. This is now essential his
+             algorithm but retains the speed of previous versions.
+  Apr 2019 - Modified by Ben Senderling, unonbcf@unomaha.edu
+           - Changed line 'range_exclude = range_exclude(range_exclude>=1 &
+             range_exclude<=NPT);' to say '>=1' instead of '>1' to prevent
+             self matches with the first point. This was indirectly
+             accounted for by setting distances less than SCALEMN to 0.
+           - '<SCALEMN' was removed from the code entirely and replaced with a
+             '<=0'. This was checked against joint angles and EMG data. The
+             change did not result in different pairs. This also removes an
+            input.
   """
   
   x = np.array([x])
@@ -232,12 +202,12 @@ def find_next_point(flag,theta,Ydisti, SCALEMX, ZMULT, ANGLMX):
     # if closest angle point is within angle range -> point found and reset
     # search space
     if PotenDisti[next_point] <= SCALEMX:
-        ANGLMX = 30*np.pi/180
-        thbest=np.abs(theta[next_point])
-        return (next_point, ZMULT, ANGLMX, thbest, SCALEMX)
+      ANGLMX = 30*np.pi/180
+      thbest=np.abs(theta[next_point])
+      return (next_point, ZMULT, ANGLMX, thbest, SCALEMX)
     else:
-        next_point=-1
-        flag=1
+      next_point=-1
+      flag=1
   if flag == 1:
     PotenDisti=np.copy(Ydisti)
     PotenDisti[Ydisti<=0] = np.nan
