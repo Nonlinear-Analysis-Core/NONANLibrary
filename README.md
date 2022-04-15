@@ -23,7 +23,6 @@ Libaries and the versions used:
 Python=3.8.8
 NumPy=1.20.1
 SciPy=1.6.2
-Numba=0.53.1
 scikit-image=0.18.1           
 scikit-learn=0.24.1      
 
