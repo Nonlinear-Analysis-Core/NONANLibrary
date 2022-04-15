@@ -16,15 +16,7 @@ MATLAB Toolboxes Required:
   
   Image Processing Toolbox
 
-### PYTHON VERSION
-
-Libaries and the versions used:
-
-Python=3.8.8
-NumPy=1.20.1
-SciPy=1.6.2
-scikit-image=0.18.1           
-scikit-learn=0.24.1      
+### PYTHON VERSION  
 
 To install from the requirements.txt file, make sure you have the package installer for Python (pip) on your PATH, and use the following command:
 
