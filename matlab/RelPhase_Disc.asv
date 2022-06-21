@@ -60,19 +60,19 @@ else
     S2_events = varargin{2};
 end
 %% Initialize Figure;
-f = figure('units','normalized','outerposition',[0 0 1 1]);
-tgroup = uitabgroup('Parent', f);
-tab1 = uitab('Parent', tgroup, 'Title', 'DRP');
-tab2 = uitab('Parent', tgroup, 'Title', 'Return Map');
-%% DRP Plot
-axes('parent', tab1);
-subplot(3,2,1); plot(S1,'k'); hold on;
-for i = 1:length(S2_events)
-    plot([S2_events(i),S2_events(i)],[min(S1),max(S1)],'k');
-end
-set(gca,'XLim',[0 length(S1)]);
-set(gca,'YLim',[mean(S1)-0.5*std(S1) max(S1)]);
-scatter(S1_events,S1(S1_events),'k','filled');
+% f = figure('units','normalized','outerposition',[0 0 1 1]);
+% tgroup = uitabgroup('Parent', f);
+% tab1 = uitab('Parent', tgroup, 'Title', 'DRP');
+% tab2 = uitab('Parent', tgroup, 'Title', 'Return Map');
+% %% DRP Plot
+% axes('parent', tab1);
+% %subplot(3,2,1); plot(S1,'k'); hold on;
+% for i = 1:length(S2_events)
+%     %plot([S2_events(i),S2_events(i)],[min(S1),max(S1)],'k');
+% end
+% set(gca,'XLim',[0 length(S1)]);
+% set(gca,'YLim',[mean(S1)-0.5*std(S1) max(S1)]);
+% scatter(S1_events,S1(S1_events),'k','filled');
 %% DRP start:
 %Compute tiR(p)
 clc; i = 2; back = 0;
@@ -117,10 +117,10 @@ for k = 1:length(N)
     end
 end
 Raw = table(t,n,T,DRP);
-subplot(3,2,3:4); plot(DRP,'k-o'); hold on;
+%subplot(3,2,3:4); plot(DRP,'k-o'); hold on;
 maxDRP = round(max(DRP)/360)+1;
 for i = 1:maxDRP
-    plot([0,length(DRP)],[360*(i-1),360*(i-1)],'k');
+    %plot([0,length(DRP)],[360*(i-1),360*(i-1)],'k');
     for i1 = 1:length(DRP)
         if DRP(i1) > 360*(i-1) && DRP(i1) <= 360*i
             count(i1,1) = i;
@@ -189,10 +189,10 @@ if DRPfirstHalfInt(last) == DRPfirstHalfInt(last-1)
 else
     DRPwithNC(last) = 0;
 end
-subplot(3,2,5:6); plot(DRPfirst,'k-o'); hold on;
+%subplot(3,2,5:6); plot(DRPfirst,'k-o'); hold on;
 maxDRP = round(max(DRPfirst)/360)+1;
 for i = 1:maxDRP
-    plot([0,length(DRPfirst)],[360*i,360*i],'k');
+    %plot([0,length(DRPfirst)],[360*i,360*i],'k');
     for i1 = 1:length(DRPfirst)
         if DRPfirst(i1) > 360*(i-1) && DRPfirst(i1) <= 360*i
             count(i1,1) = i;
@@ -214,7 +214,7 @@ for i = 1:0.5:maxn
 end
 %% Frequency Ratio Percentage Bar Graph;
 [r,~] = size(Ratio);
-subplot(3,2,2);
+%subplot(3,2,2);
 for i = 1:r
     bar(Ratio(i,1),Percentage_of_Total(i,1),0.5,'k','EdgeColor','none'); hold on;
     if Percentage_of_Total(i,1) > 0
@@ -249,23 +249,22 @@ for k = 1:round(Ratio(Percentage_of_Total == max(Percentage_of_Total),1))
     n(k,1) = round(Ratio(Percentage_of_Total == max(Percentage_of_Total),1))-k;
     PC(k,1) = sum(wdn) / length(wdn) * 100;
 end
-subplot(3,2,2); hold on; bar(holder,max(PC),0.5,'k','EdgeColor','none');
+%subplot(3,2,2); hold on; bar(holder,max(PC),0.5,'k','EdgeColor','none');
 text(holder-0.025*r,-1,sprintf('%2.2f%%',max(PC)),'VerticalAlignment','bottom','Color','w','FontSize',12,'FontWeight','bold');
 original = DRP(1:length(DRP)-lag);
 lagged = DRP(1+lag:length(DRP));
-axes('parent', tab2);
+%axes('parent', tab2);
 scatter(original,lagged,'k'); hold on;
-plot([0 max(DRP)],[0 max(DRP)],'k'); plot([0+40 max(DRP)+40],[0 max(DRP)],'r--'); plot([0-40 max(DRP)-40],[0 max(DRP)],'r--');
+%plot([0 max(DRP)],[0 max(DRP)],'k'); plot([0+40 max(DRP)+40],[0 max(DRP)],'r--'); plot([0-40 max(DRP)-40],[0 max(DRP)],'r--');
 title(['Lag = ',num2str(lag)]); set(gca,'XLim',[0,max(DRP)]); set(gca,'YLim',[0,max(DRP)]); set(gca,'XTick',0:360:max(DRP)); set(gca,'YTick',0:360:max(DRP)); grid on;
 axis square;
 for i = 1:round(Ratio(Percentage_of_Total == max(Percentage_of_Total),1))
     ann_posx = 0.3+0.4*(360*i-180)/max(DRP); if ann_posx > 0.695, ann_posx = 0.695; end
-    annotation(tab2,'textbox',[ann_posx, 0.075 , 0.0325 , 0.02],'String',num2str(PC(i)),'FontSize',20,'EdgeColor','none');
+    %annotation(tab2,'textbox',[ann_posx, 0.075 , 0.0325 , 0.02],'String',num2str(PC(i)),'FontSize',20,'EdgeColor','none');
 end
 %% Output Tables
 DRP = Raw;
 fprintf('DRP CALCULATION:\r'); disp(DRP);
 fprintf('FREQUENCY RATIOS:\r'); FR = table(Ratio,Occurances,Percentage_of_Total); disp(FR);
 fprintf('PHASE COUPLING:\r'); PC = table(n,PC); disp(PC);
-
 end

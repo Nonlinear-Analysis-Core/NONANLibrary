@@ -4,9 +4,9 @@ function [xAP]=Ent_xAp(X,Y,M,r,k)
 %
 % inputs:    X - first time series
 %            Y - second time series
-%            M - something
+%            M - something vector length
 %            r - R tolerance to find matches, proportion of the stdev
-%            k - something
+%            k - something lag
 % outputs:   xAP - cross approximate entropy
 %
 % Remarks

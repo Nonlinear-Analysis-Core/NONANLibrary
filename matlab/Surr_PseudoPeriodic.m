@@ -117,7 +117,6 @@ for i=2:1:length(Y)
     % Add the new point to the surrogate time series.
     ys(i) = y(xi);
     yi(i) = xi;
-    
 end
 
 
