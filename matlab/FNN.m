@@ -138,7 +138,7 @@ for j = 1:MaxDim
     
     if speed==1
         % Stops calculation if %FNN=0
-        if (dE(j)==0)
+        if (dE(j)<=0)
             dim=j;
             break
         end
@@ -159,7 +159,7 @@ end
 if speed==0
     for i = 2:length(dE)-1
         % Looks for 0 percentage or minimum.
-        if (dE(i)==0)||((dE(i-1)>dE(i)&&(dE(i)< dE(i+1))))
+        if (dE(i)<=0)||((dE(i-1)>dE(i)&&(dE(i)< dE(i+1))))
             dim= i;
             break
         end
