@@ -15,8 +15,10 @@ MATLAB Toolboxes Required:
   Signal Processing Toolbox
   
   Image Processing Toolbox
+
   Parallel Computing Toolbox
-  Application Compiler Toolbox
+
+  Application Compiler Toolbox 
 
 ### PYTHON VERSION  
 
