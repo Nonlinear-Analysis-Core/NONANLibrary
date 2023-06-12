@@ -109,7 +109,6 @@ def Samp_Ent(data, m, r):
     W Denton August, 2017 (Made count total number of matches for each vector length, necessary for CMSE and RCMSE)
     """
 
-    R = r * np.std(data)
     N = len(data)
 
     data = np.array(data)
@@ -125,8 +124,8 @@ def Samp_Ent(data, m, r):
             dij[:,k] = np.abs(data[k:N-m+k]-data[i+k]) 
         dj = np.max(dij[:,0:m],axis=1)
         dj1 = np.max(dij,axis=1)
-        d = np.where(dj <= R) 
-        d1 = np.where(dj1 <= R)
+        d = np.where(dj <= r) 
+        d1 = np.where(dj1 <= r)
         nm = d[0].shape[0]-1 # subtract the self match
         sum_nm = sum_nm + nm
         Bm[i] = nm/(N-m)
