@@ -169,7 +169,6 @@ def Fuzzy_Ent(series, dim, r, n):
     N = len(series)
     phi = np.zeros((1,2))
     # Value of 'r' in case of not normalized time series:
-    r = r*np.std(series)
 
     for j in range(0,2):
         m = dim+j-1 # 'm' is the embbeding dimension used each iteration
