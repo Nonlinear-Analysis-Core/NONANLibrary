@@ -78,7 +78,7 @@ function [a, r2, out_a, out_l] = dfa(ts, n_min, n_max, n_length, plotOption)
 
 dbstop if error
 
-%% Input handling
+%% Input handling -------------------- Inputs are all out of numeric order
 
 if size(ts, 1) > size(ts, 2) % ts should be row vector
     ts = ts';
@@ -93,16 +93,16 @@ if nargin < 4
 end
 
 if nargin < 3
-    n_max = length(ts)/8; % n_max as recommended by Damouras, et al., 2010
+    n_max = length(ts)/9; % n_max as recommended by Damouras, et al., 2010
 end
 
 if nargin < 2
-    n_min = 10; % n_min as recommended by Damouras, et al., 2010
+    n_min = 16; % n_min as recommended by Damouras, et al., 2010
 end
 
 n_bp =linspace(log10(n_min), log10(n_max), n_length+1)'; % calculate breakpoints for fit line (spaced evenly in log space)
 
-n = (10:length(ts)/8)'; % calculate F for every possible n (makes plot nice)
+n = (10:length(ts)/8)'; % calculate F for every possible n (makes plot nice) --------------- This seems to override the n_min and n_max arguments
 
 F = dfa_fluct(ts, n); % calculate F for every n
 
@@ -133,7 +133,7 @@ function F = dfa_fluct(ts, n)
 %   analysis while preserving the temporal order, essentially leaving a 
 %   'hole' in the data, rather than truncating the time series. This method 
 %   is shown in Mirzayof and Ashkenazy (2010) to preserve alpha in 
-%   experimental data even under extreme (>90%) dilution.
+%   experimental data even under extreme (>90%) dilution. -------------------------- Questionable decision to remove and then exptrapolate the data to replace
 % References
 % - Mirzayof, D., & Ashkenazy, Y. (2010). Preservation of long range
 %   temporal correlations under extreme random dilution. Physica A: 
@@ -161,9 +161,10 @@ for nn = 1:length(n)
     
     % "the ... time series (of total length N) is first
     % integrated, y(k) = sum(i=1:k)(B(i) - B_ave), where B(i) is the ith
-    % [value of the time series] and B_ave is the average [value]"
+    % [value of the time series] and B_ave is the average [value]" --------------------- I like the fact that the written description is used in the comments
+
     B_ave = nanmean(B);
-    B_nonan = fillmissing(B,'linear','SamplePoints',1:length(B)); % deal with NaN values for integration step 
+    B_nonan = fillmissing(B,'linear','SamplePoints',1:length(B)); % deal with NaN values for integration step ----------------- this step
     y_nonan = cumsum(B_nonan - B_ave);
     y = y_nonan;
     y(isnan(B)) = NaN; % replace NaN values in integrated series
@@ -183,7 +184,7 @@ for nn = 1:length(n)
     % "detrend the integrated time series, y(k), by subtracting the local
     % trend, y_n(k) .... The root-mean-square fluctuation ... is calculated
     % by [Equation 1]"
-    F2(nn) = nanmean((y - y_n).^2); % ignores NaN values
+    F2(nn) = nanmean((y - y_n).^2); % ignores NaN values ---------------------- if you have already removed the NANs this is not necessary
     
     F(nn) = sqrt(F2(nn));
     
@@ -224,7 +225,7 @@ function [F_fit, n_fit, a, r2, logF_fit] = dfa_fit_average(n, F, n_bp)
 F10=log10(F)';
 n10=log10(n)';
 
-Xave=zeros(length(n_bp)-1,1);
+Xave=zeros(length(n_bp)-1,1); % --------------- why can't this be implemented in the main loop?
 Yave=zeros(length(n_bp)-1,1);
 for i = 1:length(n_bp) -1
     Xave(i) = mean((n_bp(i:i+1)))'; % calculate center of bin
@@ -258,7 +259,7 @@ function hAxObj = dfa_plot(n, F, n_fit, F_fit, logF_fit)
 %            was never used.
 %% Begin Code
 
-loglog(n, F, 'b.', n_fit, F_fit, 'ro', n_fit, logF_fit, '-r')
+loglog(n, F, 'b.', n_fit, F_fit, 'ro', n_fit, logF_fit, '-r') % ----------------- this seems like it could also be in the one function
 
 hAxObj = handle(gca);
 x_lim = get(hAxObj, 'XLim');
