@@ -109,7 +109,6 @@ def Samp_Ent(data, m, r):
     W Denton August, 2017 (Made count total number of matches for each vector length, necessary for CMSE and RCMSE)
     """
 
-    R = r * np.std(data)
     N = len(data)
 
     data = np.array(data)
@@ -125,12 +124,12 @@ def Samp_Ent(data, m, r):
             dij[:,k] = np.abs(data[k:N-m+k]-data[i+k]) 
         dj = np.max(dij[:,0:m],axis=1)
         dj1 = np.max(dij,axis=1)
-        d = np.where(dj <= R) 
-        d1 = np.where(dj1 <= R)
-        nm = d[0].shape[0]
+        d = np.where(dj <= r) 
+        d1 = np.where(dj1 <= r)
+        nm = d[0].shape[0]-1 # subtract the self match
         sum_nm = sum_nm + nm
         Bm[i] = nm/(N-m)
-        nm1 = d1[0].shape[0]
+        nm1 = d1[0].shape[0]-1 # subtract the self match
         sum_nm1 = sum_nm1 + nm1
         Am[i] = nm1/(N-m)
     
@@ -170,7 +169,6 @@ def Fuzzy_Ent(series, dim, r, n):
     N = len(series)
     phi = np.zeros((1,2))
     # Value of 'r' in case of not normalized time series:
-    r = r*np.std(series)
 
     for j in range(0,2):
         m = dim+j-1 # 'm' is the embbeding dimension used each iteration

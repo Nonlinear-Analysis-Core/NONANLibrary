@@ -170,7 +170,6 @@ assert(control,'The user must introduce a step for the fuzzy exponential functio
 N = length(series);
 phi = zeros(1,2);
 % Value of 'r' in case of not normalized time series:
-r = r*std(series);
 
 for j = 1:2
     m = dim+j-1; % 'm' is the embbeding dimension used each iteration
