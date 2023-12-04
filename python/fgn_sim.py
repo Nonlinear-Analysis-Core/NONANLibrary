@@ -5,7 +5,7 @@ def fgn_sim(n=1000, H=0.7):
     """Create Fractional Gaussian Noise
 
         Inputs:
-            n: Number of datapoints of the time series. Default is 1000 data points.
+            n: Number of data points of the time series. Default is 1000 data points.
             H: Hurst parameter of the time series. Default is 0.7.
 
         Outputs:
