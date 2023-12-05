@@ -9,7 +9,7 @@ def fgn_sim(n=1000, H=0.7):
             H: Hurst parameter of the time series. Default is 0.7.
 
         Outputs:
-            An array of n datapoints with variability H
+            An array of n data points with variability H
 
     # =============================================================================
                                 ------ EXAMPLE ------
