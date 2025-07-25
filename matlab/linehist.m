@@ -15,8 +15,9 @@ end
 % If a contains multiple recurrence matrices, compute dot product of all
 % matrices...?
 if length(a) > 1
+    min_size = min(cellfun(@(x) size(x,2), a));
     for i3 = 1:length(a)-1
-        a{i3+1} = a{i3}.*a{i3+1};
+        a{i3+1} = a{i3}(1:min_size,1:min_size).*a{i3+1}(1:min_size,1:min_size);
     end
     a = a{i3+1};
 else
@@ -26,7 +27,7 @@ end
 % Caluculate diagonal line distribution
 diag_hist = [];
 vertical_hist = [];
-for i4 = -(length(data)-1):length(data)-1
+for i4 = -(length(a)-1):length(a)-1
     c=diag(a,i4);
     % bwlabel is taking each diagonal line and looking for the 1's, it will
     % return increasing numbers for each new instance of 1's, for example
@@ -57,7 +58,7 @@ if ~contains(type,'crqa')
 end
 
 % Calculate vertical line distribution
-for i5=1:length(data)
+for i5=1:length(a)
     c=(a(:,i5));
     v=bwlabel(c,8);
     if sum(v) ~= 0
@@ -66,7 +67,7 @@ for i5=1:length(data)
         v = [];
     end
     if ~isempty(v)
-        if v(1,1)~=length(data)
+        if v(1,1)~=length(a)
             v=v(2:end);
         end
     end
