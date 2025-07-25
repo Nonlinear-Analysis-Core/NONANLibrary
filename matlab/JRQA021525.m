@@ -1,8 +1,8 @@
 function [RP, RESULTS]=JRQA021525(data,tau,dim,param,threshold,options)
 arguments
     data double {mustbeAtLeastTwoColumns}
-    tau (1,1) {mustBeInteger, mustBePositive} = 1
-    dim (1,1) {mustBeInteger, mustBePositive} = 1
+    tau (1,2) {mustBeInteger, mustBePositive} = [1 1]
+    dim (1,2) {mustBeInteger, mustBePositive} = [1 1]
     param (1,1) string {mustBeMember(param,["rad", "rec"])} = "rec"
     threshold (1,1) double {mustBePositive} = 2.5
     options.Zscore (1,1) {mustBeMember(options.Zscore,[0,1])} = 1
@@ -31,46 +31,48 @@ end
 DIM = size(data, 2);
 
 % Embed the data onto phase space
-if dim > 1
-    data = psr(data, tau, dim);
+for i = 1:DIM
+    if dim(i) > 1
+        data2{i} = psr(data(:,i), tau(i), dim(i));
+    end
 end
 
 % Calculate distance matrix based on the type of RQA
 for i = 1:DIM
-    a{i}=pdist2(data(:,i:DIM:end),data(:,i:DIM:end));
+    a{i}=pdist2(data2{i},data2{i});
     a{i}=abs(a{i})*-1;
 end
 
 % Normalize distance matrix
 if contains(options.Norm, 'euc')
     for i = 1:length(a)
-    b = mean(a{i}(a{i}<0));
-    b = -sqrt(abs(((b^2)+2*(DIM*dim))));
-    a{i} = a{i}/abs(b);
+        b = mean(a{i}(a{i}<0));
+        b = -sqrt(abs(((b^2)+2*(DIM*dim))));
+        a{i} = a{i}/abs(b);
     end
 elseif contains(options.Norm, 'min')
     for i = 1:length(a)
-    b = max(a{i}(a{i}<0));
-    a{i} = a{i}/abs(b);
+        b = max(a{i}(a{i}<0));
+        a{i} = a{i}/abs(b);
     end
 elseif contains(options.Norm, 'max')
     for i = 1:length(a)
-    b = min(a{i}(a{i}<0));
-    a{i} = a{i}/abs(b);
+        b = min(a{i}(a{i}<0));
+        a{i} = a{i}/abs(b);
     end
 end
 
 % Compute weighted recurrence plot
-wrp = a;
-for i = 1:size(a,2)-1
-    wrp{i+1} = wrp{i}.*wrp{i+1};
-end
-if i
-    wrp = -(abs(wrp{i+1})).^(1/(i+1));
-end
-if iscell(wrp)
-    wrp = wrp{1};
-end
+wrp = a{1};
+% for i = 1:size(a,2)-1
+%     wrp{i+1} = wrp{i}.*wrp{i+1};
+% end
+% if i
+%     wrp = -(abs(wrp{i+1})).^(1/(i+1));
+% end
+% if iscell(wrp)
+%     wrp = wrp{1};
+% end
 
 % Calculate recurrence plot
 switch param
@@ -108,7 +110,7 @@ if RESULTS.REC > 0
     p=count./total;
     del=find(count==0); p(del)=[];
     RESULTS.EntrV=-sum(p.*log2(p));
-    RESULTS.EntrW=Ent_Weighted(wrp);
+    RESULTS.EntrW=NaN;
 else
     RESULTS.DET=NaN;
     RESULTS.MeanL=NaN;
