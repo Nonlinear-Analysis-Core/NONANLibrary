@@ -21,8 +21,6 @@ function [rec, diag_hist, vertical_hist, rad_final,A] = set_radius(data,a,radius
         end
 
         % Search for radius with target percent recurrence
-        % Create wait bar to display progress
-        wb = waitbar(0,['Finding radius to give %REC = ',num2str(threshold), ' Please wait...']);    
         lv = radius_start; % set low value
         hv = radius_end; % set high value
         target = threshold;  % designate what percent recurrence is wanted
@@ -44,9 +42,7 @@ function [rec, diag_hist, vertical_hist, rad_final,A] = set_radius(data,a,radius
                 lv(i1+1) = lv(i1);
                 hv(i1+1) = mid(i1);
             end
-            waitbar(i1/iter,wb); % update wait bar
         end
-        close(wb) % close wait bar
         rec_final = rec_iter(end); % set final percent recurrence
         rad_final = rad(end); % set radius for final percent recurrence
         disp(['% recurrence = ',num2str(rec_final),', radius = ',num2str((rad_final))])
