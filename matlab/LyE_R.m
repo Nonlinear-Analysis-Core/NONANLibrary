@@ -180,27 +180,35 @@ out=[(1:M)',IND2,zeros(M,1)]; % Matched pairs and average line divergence.
 
 %% Calculate distances between matched pairs.
 
-DM=zeros(M-1,M-1);
+% Only the per-propagation-step mean of log distance is used, so the full
+% (M-1)-by-(M-1) distance matrix is accumulated rather than stored. Storing
+% it costs 8*(M-1)^2 bytes: 0.9 GB at N=10800 and 3.2 GB at N=20000, which
+% is a ceiling on series length rather than a slowdown.
+sumLogDist=zeros(M-1,1);
+nDist=zeros(M-1,1);
 for i=1:length(IND2)-1
-    
+
    % The data can only be propagated so far from the matched pair.
     EndITL=M-IND2(i);
     if (M-IND2(i))>(M-i)
         EndITL=M-i;
     end
-    
+
     % Finds the distance between the matched paris and their propagated
     % points to the end of the useable data.
-    DM(1:EndITL,i)=sqrt(sum((Y(i+1:EndITL+i,:)-Y(IND2(i)+1:EndITL+IND2(i),:)).^2,2));
-    
+    d=sqrt(sum((Y(i+1:EndITL+i,:)-Y(IND2(i)+1:EndITL+IND2(i),:)).^2,2));
+
+    % Zero distances are excluded from the mean, as are steps beyond EndITL.
+    pos=find(d>0);
+    sumLogDist(pos)=sumLogDist(pos)+log(d(pos));
+    nDist(pos)=nDist(pos)+1;
+
 end
 
 %% Calculaets the average line divergence.
-[r,~]=size(DM);
-for i=1:r
-    distanceM=DM(i,:);
-    if sum(distanceM)~=0
-        AveLnDiv(i)=mean(log(distanceM(distanceM>0)));
+for i=1:M-1
+    if nDist(i)>0
+        AveLnDiv(i)=sumLogDist(i)/nDist(i);
         out(i,3)=AveLnDiv(i);
     end
 end

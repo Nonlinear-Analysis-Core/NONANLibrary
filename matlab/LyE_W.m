@@ -7,15 +7,20 @@ function [out,LyE] = LyE_W(X,Fs,tau,dim,evolve,varargin)
 %         - evolve, parameter of the same name from Wolf's 1985 paper. This
 %           code expects a number of frames as an input.
 % outputs - out, matrix detailing variables at each iteration
-%         - LyE, largest lyapunov exponent
-%% [out,LyE] = LyE_W20200820(X,Fs,tau,dim,evolve,SCALEMX,SCALEMN,ANGLMX,ZMULT)
+%         - LyE, largest lyapunov exponent, in BITS per unit time. The
+%           algorithm accumulates log2 of the divergence ratio, following
+%           Wolf (1985), which reports bits per second. Published reference
+%           values are usually quoted in nats (base e), including Sprott
+%           (2003) Appendix A. Multiply by log(2) to convert to nats.
+%           For example the logistic map at r = 4 has lambda = ln 2 nats per
+%           iteration, which this function returns as 1.0 bits.
+%% [out,LyE] = LyE_W(X,Fs,tau,dim,evolve,SCALEMX,ANGLMX,ZMULT)
 %         - SCALEMX, length of which the local structure of the attractor
 %           is no longer being probed
-%         - SCALEMN, length below which noise predominates the attractors
-%           behavior
 %         - ANGLMX, maximum angle used to constrain replacements
 %         - ZMULT, multiplier used to increase SCALEMX, unused in the
 %           current version of the code
+%           All three must be supplied together if any is supplied.
 % Remarks
 % - This code calculates the largest lyapunov exponent of a time series
 %   according to the algorithm detailed in Wolf's 1985 paper. This code has
