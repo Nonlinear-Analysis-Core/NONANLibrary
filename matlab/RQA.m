@@ -148,7 +148,6 @@ function [RP, RESULTS]=RQA(DATA,TYPE,tau,dim,ZSCORE,NORM,SETPARA,SETVALUE,plotOp
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %% Begin Code
 
-dbstop if error
 
 %% Set default parameters if no input exists
 % If SETPARA is not specified, set to 'radius'
