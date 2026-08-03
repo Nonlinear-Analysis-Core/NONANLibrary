@@ -15,7 +15,6 @@ arguments
 end
 
 %% Begin code
-dbstop if error % If error occurs, enters debug mode
 
 %% Change variable names for readability
 dmin = options.Dmin;

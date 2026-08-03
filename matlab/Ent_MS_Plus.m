@@ -28,7 +28,6 @@ function [ RCMSE, CMSE, MSE, MSFE, GMSE ] = Ent_MS_Plus( x, tau, m, r )
 %            needing to be in an external for loop.
 %% Begin Code
 
-dbstop if error
 
 R = r*std(x);
 N = length(x);

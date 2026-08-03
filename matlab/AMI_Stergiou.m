@@ -90,7 +90,6 @@ function varargout=AMI_Stergiou(varargin)
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%
 
-dbstop if error
 
 if (nargin==2 || nargin==3) && numel(varargin{2})==1
     
