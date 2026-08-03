@@ -114,7 +114,7 @@ if plotOption==1
     ylabel('\Delta ln(C(\epsilon)) /\Delta ln(\epsilon)','FontWeight','bold','FontSize',fsize)
     %axis tight
     hold off
-    display(['Correlation Dimension = ', num2str(CoD(1))])  % Correlation Dimension
+    disp(['Correlation Dimension = ', num2str(CoD(1))])  % Correlation Dimension
 end
 
 CoD=CoD(1);
