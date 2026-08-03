@@ -69,7 +69,6 @@ function [rho,out]=Surr_findrho(y,tau,dim)
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%
 
-dbstop if error
 
 %% Find upper bound for binary search
 

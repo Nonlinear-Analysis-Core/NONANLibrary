@@ -64,7 +64,6 @@ function [ys,yi]=Surr_PseudoPeriodic(y,tau,dim,rho)
 % NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %% Begin Code
-dbstop if error
 
 %% Phase space reconstruction
 N=length(y);

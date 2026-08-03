@@ -98,9 +98,6 @@ function [varargout]=LyE_R(X,Fs,tau,dim,varargin)
 % SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%
 
-% If the code errors MATLAB will enter debug mode so the issue can be more
-% easily identified.
-dbstop if error
 
 % Checked that X is vertically oriented. If X is a single or multiple
 % dimentional array the length is assumed to be longer than the width. It
