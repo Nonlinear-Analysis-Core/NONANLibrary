@@ -93,7 +93,7 @@ function testLyE_R_NeighboursAreNotTemporallyAdjacent(tc)
 % The mechanism behind the test above, asserted separately so a regression is
 % diagnosed rather than merely detected.
 for c = [1 1e6]
-    out = LyE_R(c * tc.TestData.lorenz, 1/0.03, 5, 3);
+    out = lye_r(c * tc.TestData.lorenz, 1/0.03, 5, 3);
     lag = abs(out(:,1) - out(:,2));
     frac = mean(lag <= 4);            % 4 = round(tau*0.8), the exclusion width
     tc.verifyLessThan(frac, 0.05, sprintf( ...
@@ -117,7 +117,7 @@ for k = 1:size(cases,1)
     else
         y = nonantest.signals(cases{k,1}, 2000, cases{k,2});
     end
-    out = LyE_R(y, 1, cases{k,3}, cases{k,4});
+    out = lye_r(y, 1, cases{k,3}, cases{k,4});
     tc.verifyEqual(size(out,2), 3, sprintf( ...
         ['LyE_R returned %d columns on the %s series. The divergence curve is\n' ...
          'column 3, so a 2-column return makes every documented downstream use\n' ...
@@ -127,8 +127,8 @@ end
 
 function testChaoticExceedsPeriodic(tc)
 % Ordering needs no reference value and is the minimum any estimator owes.
-[~, chaotic]  = LyE_W(nonantest.signals('skewtent', 2000, 0.3), 1, 1, 2, 5);
-[~, periodic] = LyE_W(tc.TestData.sine, 1, 12, 3, 10);
+[~, chaotic]  = lye_w(nonantest.signals('skewtent', 2000, 0.3), 1, 1, 2, 5);
+[~, periodic] = lye_w(tc.TestData.sine, 1, 12, 3, 10);
 tc.verifyGreaterThan(chaotic, periodic + 0.1, sprintf( ...
     ['A chaotic map scored %.4f and a pure sine %.4f. An estimator that\n' ...
      'cannot order these cannot distinguish chaos from a cycle.'], ...
@@ -151,7 +151,7 @@ ratios = zeros(size(ps));
 for k = 1:numel(ps)
     y = nonantest.signals('skewtent', 2000, ps(k));
     ref = nonantest.lambdaReference('skewtent', ps(k));
-    [~, L] = LyE_W(y, 1, 1, 2, 5);
+    [~, L] = lye_w(y, 1, 1, 2, 5);
     ratios(k) = L / ref.bits;
     tc.verifyEqual(L, ref.bits, 'RelTol', 0.20, sprintf( ...
         'skew tent p=%.1f: LyE_W %.4f bits against an EXACT %.4f bits (ratio %.3f)', ...
@@ -172,7 +172,7 @@ function testRecoversExactLogisticExponent(tc)
 % lambda = ln 2 exactly at r = 4, by conjugacy to the tent map.
 y = nonantest.signals('logistic', 2000);
 ref = nonantest.lambdaReference('logistic');
-[~, L] = LyE_W(y, 1, 1, 2, 5);
+[~, L] = lye_w(y, 1, 1, 2, 5);
 tc.verifyEqual(L, ref.bits, 'RelTol', 0.15, sprintf( ...
     'logistic r=4: LyE_W %.4f bits against an EXACT %.4f bits (= ln 2 nats)', ...
     L, ref.bits));
@@ -206,7 +206,7 @@ for k = 1:size(cases,1)
     name = cases{k,1};
     y = nonantest.signals(name, 2000);
     ref = nonantest.lambdaReference(name);
-    [~, L] = LyE_W(y, cases{k,2}, cases{k,3}, cases{k,4}, cases{k,5});
+    [~, L] = lye_w(y, cases{k,2}, cases{k,3}, cases{k,4}, cases{k,5});
     nats = L * log(2);
     tc.verifyGreaterThan(nats, 0, sprintf('%s: lambda must be positive', name));
     tc.verifyEqual(nats, ref.nats, 'RelTol', 0.60, sprintf( ...
@@ -223,7 +223,7 @@ function testLyE_W_ReturnsBitsNotNats(tc)
 % Pins the convention against the exact logistic value, where bits and nats
 % differ by a factor of 1.44 and cannot be confused.
 y = nonantest.signals('logistic', 2000);
-[~, L] = LyE_W(y, 1, 1, 2, 5);
+[~, L] = lye_w(y, 1, 1, 2, 5);
 tc.verifyEqual(L, 1.0, 'AbsTol', 0.15, sprintf( ...
     ['LyE_W returned %.4f on the logistic map at r=4. Expected ~1.0 BITS per\n' ...
      'iteration (lambda = ln 2 nats). If this now reads ~0.69 the function has\n' ...
@@ -241,13 +241,13 @@ function testLyE_W_DocumentedArgumentListWorks(tc)
 % nargin == 8 and reads varargin{1:3} as SCALEMX, ANGLMX, ZMULT -- SCALEMN
 % having been removed from the code, per the function's own changelog,
 % without the signature line being updated.
-s = nonantest.sideEffects(@() LyE_W(tc.TestData.lorenz, 1/0.03, 5, 3, 10, ...
+s = nonantest.sideEffects(@() lye_w(tc.TestData.lorenz, 1/0.03, 5, 3, 10, ...
                                     1, 30*pi/180, 1));
 tc.verifyFalse(s.errored, sprintf( ...
     'The documented extended form of LyE_W fails: "%s".', localMsg(s)));
 
 % And the form that is no longer supported must not silently appear to work.
-s9 = nonantest.sideEffects(@() LyE_W(tc.TestData.lorenz, 1/0.03, 5, 3, 10, ...
+s9 = nonantest.sideEffects(@() lye_w(tc.TestData.lorenz, 1/0.03, 5, 3, 10, ...
                                      1, 0.1, 30*pi/180, 1));
 tc.verifyTrue(s9.errored, ...
     'A nine-argument call should raise, since SCALEMN is not implemented.');
@@ -276,7 +276,7 @@ tc.verifyNotEmpty(regexp(head, 'BITS|bits per', 'once'), ...
 end
 
 function testLyE_R_DoesNotArmDebuggerOrOpenFigures(tc)
-s = nonantest.sideEffects(@() LyE_R(tc.TestData.lorenz, 1/0.03, 5, 3));
+s = nonantest.sideEffects(@() lye_r(tc.TestData.lorenz, 1/0.03, 5, 3));
 tc.verifyFalse(s.errored, sprintf('LyE_R errored: %s', localMsg(s)));
 tc.verifyFalse(s.dbstop, 'LyE_R executed `dbstop if error`.');
 tc.verifyEqual(s.figures, 0, 'LyE_R opened a figure in its default form.');
@@ -315,7 +315,7 @@ function testLyE_R_DivergenceCurveIsUsableAtLength(tc)
 % allocation was already 0.3 GB.
 N = 6000;
 y = nonantest.signals('lorenz', N);
-out = LyE_R(y, 1/0.03, 5, 3);
+out = lye_r(y, 1/0.03, 5, 3);
 tc.verifyEqual(size(out,2), 3, 'LyE_R must return three columns');
 d = out(:,3);
 nz = d(d ~= 0);
@@ -336,7 +336,7 @@ function s = localRosensteinSlope(x, Fs)
 % the scaling region is part of the measurement and is held fixed at samples
 % 5-100 for every comparison. Choosing a good window generally is an open
 % problem, tracked separately.
-out = LyE_R(x, Fs, 5, 3);
+out = lye_r(x, Fs, 5, 3);
 d = out(:,3);
 idx = (5:100)';
 p = polyfit(idx/Fs, d(idx), 1);

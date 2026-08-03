@@ -103,14 +103,14 @@ for i = 1:n
 
         ev = 10; if isMap, ev = 5; end
         try
-            [~, Lw] = LyE_W(y, fs, tau, dim, ev);
+            [~, Lw] = lye_w(y, fs, tau, dim, ev);
             wolf(i) = Lw * log(2);                 % bits -> nats
         catch ME
             note(i) = note(i) + " wolf:" + string(ME.message);
         end
 
         try
-            out = LyE_R(y, fs, tau, dim);
+            out = lye_r(y, fs, tau, dim);
             if size(out,2) < 3
                 note(i) = note(i) + " rosen: LyE_R returned 2 columns";
             else

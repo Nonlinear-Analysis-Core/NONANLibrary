@@ -32,7 +32,7 @@ function testAlg1PreservesSpectrumExactly(tc)
 names = fieldnames(tc.TestData.series);
 for i = 1:numel(names)
     x = tc.TestData.series.(names{i});
-    r = nonantest.surrogateContract(x, @(v) Surr_Theiler(v, 1), 19);
+    r = nonantest.surrogateContract(x, @(v) surr_theiler(v, 1), 19);
 
     tc.verifyLessThan(r.spectral_error, 1e-10, sprintf( ...
         ['[%s] Algorithm 1 must preserve the power spectrum EXACTLY.\n' ...
@@ -56,7 +56,7 @@ function testAlg1PreservesAutocorrelation(tc)
 % The linear null is "the data are a Gaussian linear process". Its whole
 % content is the autocorrelation function, so the surrogate must reproduce it.
 x = tc.TestData.series.ar1;
-r = nonantest.surrogateContract(x, @(v) Surr_Theiler(v, 1), 39);
+r = nonantest.surrogateContract(x, @(v) surr_theiler(v, 1), 39);
 tc.verifyLessThan(abs(r.acf1_surrogate - r.acf1_original), 0.05, sprintf( ...
     ['Algorithm 1 changed the lag-1 autocorrelation: %.4f -> %.4f.\n' ...
      'The linear structure IS the null hypothesis; it must survive.'], ...
@@ -74,7 +74,7 @@ function testAlg2PreservesDistributionExactly(tc)
 names = fieldnames(tc.TestData.series);
 for i = 1:numel(names)
     x = tc.TestData.series.(names{i});
-    r = nonantest.surrogateContract(x, @(v) Surr_Theiler(v, 2), 19);
+    r = nonantest.surrogateContract(x, @(v) surr_theiler(v, 2), 19);
     tc.verifyLessThan(r.distribution_error, 1e-12, sprintf( ...
         ['[%s] AAFT must return an exact permutation of the input values.\n' ...
          '     measured distribution error %.3e'], names{i}, r.distribution_error));
@@ -95,7 +95,7 @@ function testAlg2SpectrumIsApproximateNotExact(tc)
 %     conjugate-symmetric fix  0.226
 % The 0.45 bound sits between them with room on both sides.
 x = tc.TestData.series.aaft;
-r = nonantest.surrogateContract(x, @(v) Surr_Theiler(v, 2), 39);
+r = nonantest.surrogateContract(x, @(v) surr_theiler(v, 2), 39);
 tc.verifyGreaterThan(r.spectral_error, 1e-6, ...
     'AAFT with an exact spectrum would not be AAFT -- check the algorithm switch.');
 tc.verifyLessThan(r.spectral_error, 0.45, sprintf( ...
@@ -111,7 +111,7 @@ end
 % ------------------------------------------------------------------
 function testAlg0IsAnExactPermutation(tc)
 x = tc.TestData.series.skewed;
-r = nonantest.surrogateContract(x, @(v) Surr_Theiler(v, 0), 19);
+r = nonantest.surrogateContract(x, @(v) surr_theiler(v, 0), 19);
 tc.verifyLessThan(r.distribution_error, 1e-12, ...
     'Algorithm 0 must be a permutation of the input.');
 tc.verifyLessThan(abs(r.acf1_surrogate), 0.15, ...
@@ -124,7 +124,7 @@ end
 function testAllAlgorithmsReturnRealSameLengthDistinct(tc)
 x = tc.TestData.series.fgn;
 for alg = [0 1 2]
-    r = nonantest.surrogateContract(x, @(v) Surr_Theiler(v, alg), 5);
+    r = nonantest.surrogateContract(x, @(v) surr_theiler(v, alg), 5);
     tc.verifyTrue(r.length_ok,   sprintf('alg %d changed the series length', alg));
     tc.verifyFalse(r.any_complex, sprintf('alg %d returned a complex series', alg));
     tc.verifyTrue(r.distinct,    sprintf('alg %d returned identical surrogates', alg));
@@ -135,7 +135,7 @@ function testUnknownAlgorithmIsRejected(tc)
 % Currently the switch has no otherwise branch, so alg 3 silently returns an
 % undefined output rather than telling the caller they asked for nothing.
 x = tc.TestData.series.fgn;
-s = nonantest.sideEffects(@() Surr_Theiler(x, 3));
+s = nonantest.sideEffects(@() surr_theiler(x, 3));
 tc.verifyTrue(s.errored, ...
     'An unsupported algorithm number should raise, not return silently.');
 end
@@ -166,7 +166,7 @@ end
 % preserved". Those uses are not exercised here and remain untested.
 % ------------------------------------------------------------------
 function testTypeIErrorIsNotInflatedForNonlinearStatistic(tc)
-[rate, ~] = localRunExperiment(@(v) Surr_Theiler(v, 1), 'ar1', 200);
+[rate, ~] = localRunExperiment(@(v) surr_theiler(v, 1), 'ar1', 200);
 fprintf('    [blast radius] Alg 1 Type I on AR(1), time-asymmetry: %.3f (nominal 0.10)\n', rate);
 % Binomial 99% upper bound around 0.10 at nRep = 200 is ~0.155.
 tc.verifyLessThan(rate, 0.155, sprintf( ...
@@ -176,7 +176,7 @@ tc.verifyLessThan(rate, 0.155, sprintf( ...
 end
 
 function testRetainsPowerAgainstDeterministicChaos(tc)
-[rate, ~] = localRunExperiment(@(v) Surr_Theiler(v, 1), 'henon', 100);
+[rate, ~] = localRunExperiment(@(v) surr_theiler(v, 1), 'henon', 100);
 fprintf('    [blast radius] Alg 1 power on Henon, time-asymmetry:  %.3f\n', rate);
 tc.verifyGreaterThan(rate, 0.90, sprintf( ...
     'Power against the Henon map fell to %.3f; it should be ~1.', rate));

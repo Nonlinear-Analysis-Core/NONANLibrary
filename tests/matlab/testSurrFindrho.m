@@ -47,7 +47,7 @@ for c = 1:size(cases, 1)
     failures = 0;
     lastMsg = '';
     for rep = 1:nRep
-        s = nonantest.sideEffects(@() Surr_findrho(y, tc.TestData.tau, tc.TestData.dim));
+        s = nonantest.sideEffects(@() surr_find_rho(y, tc.TestData.tau, tc.TestData.dim));
         if s.errored
             failures = failures + 1;
             lastMsg = s.err.message;
@@ -68,7 +68,7 @@ end
 function testReturnedRhoIsInSearchRangeAndBeatsEndpoints(tc)
 y = tc.TestData.lor;
 for rep = 1:10
-    s = nonantest.sideEffects(@() Surr_findrho(y, tc.TestData.tau, tc.TestData.dim));
+    s = nonantest.sideEffects(@() surr_find_rho(y, tc.TestData.tau, tc.TestData.dim));
     if s.errored, continue; end   % covered by testAlwaysReturnsRho
     rho = s.value;
     tc.verifyGreaterThanOrEqual(rho, 0.1, 'rho below the searched lower bound');
@@ -85,7 +85,7 @@ end
 % ------------------------------------------------------------------
 function testTerminatesQuickly(tc)
 y = tc.TestData.pp;
-s = nonantest.sideEffects(@() Surr_findrho(y, tc.TestData.tau, tc.TestData.dim));
+s = nonantest.sideEffects(@() surr_find_rho(y, tc.TestData.tau, tc.TestData.dim));
 tc.verifyLessThan(s.seconds, 5, sprintf( ...
     'Surr_findrho took %.1f s on a 300-point series.', s.seconds));
 end
@@ -95,7 +95,7 @@ end
 % ------------------------------------------------------------------
 function testDoesNotArmTheDebugger(tc)
 y = tc.TestData.pp;
-s = nonantest.sideEffects(@() Surr_findrho(y, tc.TestData.tau, tc.TestData.dim));
+s = nonantest.sideEffects(@() surr_find_rho(y, tc.TestData.tau, tc.TestData.dim));
 tc.verifyFalse(s.dbstop, ...
     ['Surr_findrho executed `dbstop if error`. This is global session state.\n' ...
      'Combined with the unassigned-output bug it means: the function errors,\n' ...
@@ -123,7 +123,7 @@ function testLowerBoundIsUsableOnChaoticData(tc)
 y = tc.TestData.lor;
 failures = 0;
 for rep = 1:10
-    s = nonantest.sideEffects(@() Surr_PseudoPeriodic(y, tc.TestData.tau, tc.TestData.dim, 0.1));
+    s = nonantest.sideEffects(@() surr_pseudo_periodic(y, tc.TestData.tau, tc.TestData.dim, 0.1));
     if s.errored, failures = failures + 1; end
 end
 tc.verifyEqual(failures, 0, sprintf( ...
@@ -152,7 +152,7 @@ for c = 1:size(cases, 1)
         vals = nan(1, 15);
         for rep = 1:15
             try
-                [~, yi] = Surr_PseudoPeriodic(y, tc.TestData.tau, tc.TestData.dim, rhos(k));
+                [~, yi] = surr_pseudo_periodic(y, tc.TestData.tau, tc.TestData.dim, rhos(k));
                 vals(rep) = sum(diff(find(diff(yi) ~= 1)) > 2);
             catch
                 % rho too low for this series; leave NaN
@@ -168,7 +168,7 @@ for c = 1:size(cases, 1)
     % testable one is: when the optimum is NOT bracketed, say so rather than
     % returning an endpoint that looks like a maximum. Assert that instead.
     lastwarn('');
-    rho = Surr_findrho(y, tc.TestData.tau, tc.TestData.dim);
+    rho = surr_find_rho(y, tc.TestData.tau, tc.TestData.dim);
     [~, warnId] = lastwarn;
     warned = strcmp(warnId, 'Surr_findrho:optimumAtBound');
 
@@ -200,8 +200,8 @@ cleanup = onCleanup(@() warning(w));
 narrow = nan(1, 15);
 wide   = nan(1, 15);
 for k = 1:15
-    try, narrow(k) = Surr_findrho(y, tc.TestData.tau, tc.TestData.dim); catch, end
-    try, wide(k)   = Surr_findrho(y, tc.TestData.tau, tc.TestData.dim, 0.005, 0.5); catch, end
+    try, narrow(k) = surr_find_rho(y, tc.TestData.tau, tc.TestData.dim); catch, end
+    try, wide(k)   = surr_find_rho(y, tc.TestData.tau, tc.TestData.dim, 0.005, 0.5); catch, end
 end
 tc.verifyLessThan(median(wide, 'omitnan'), median(narrow, 'omitnan'), sprintf( ...
     ['Widening the bracket to [0.005, 0.5] gave median rho %.4f against\n' ...
@@ -212,8 +212,8 @@ end
 
 function testBoundsAreValidated(tc)
 y = tc.TestData.pp;
-tc.verifyError(@() Surr_findrho(y, tc.TestData.tau, tc.TestData.dim, 0, 1), ...
+tc.verifyError(@() surr_find_rho(y, tc.TestData.tau, tc.TestData.dim, 0, 1), ...
     'Surr_findrho:bounds');
-tc.verifyError(@() Surr_findrho(y, tc.TestData.tau, tc.TestData.dim, 1, 0.5), ...
+tc.verifyError(@() surr_find_rho(y, tc.TestData.tau, tc.TestData.dim, 1, 0.5), ...
     'Surr_findrho:bounds');
 end
