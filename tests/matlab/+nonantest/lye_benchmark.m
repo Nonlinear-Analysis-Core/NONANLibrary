@@ -5,8 +5,21 @@ function R = lye_benchmark(opts)
 %   R = nonantest.lye_benchmark(N=4000, Verbose=true)
 %
 %   Runs both estimators over every usable system in the catalogue and
-%   returns a table with, per system, the reference lambda, each estimator's
-%   estimate in NATS, the ratio to reference, and any failure.
+%   returns a table with, per system and per estimator:
+%
+%     expected     Sprott's lambda, NATS per unit time
+%     wolf / ros   observed estimate, converted to NATS
+%     *Diff        observed - expected, SIGNED, so the direction of the error
+%                  is visible rather than averaged away
+%     *AbsDiff     |observed - expected|
+%     *Ratio       observed / expected, 1.00 = agreement
+%
+%   Both an absolute difference and a ratio are reported because neither is
+%   sufficient alone. The reference exponents span 0.0064 (Henon
+%   area-preserving) to 8.87 (linear congruential), a factor of 1400, so a
+%   mean difference is dominated by the large-lambda systems and a mean ratio
+%   by the small-lambda ones. Where the two disagree for a given estimator,
+%   that disagreement is the finding.
 %
 %   PROTOCOL, IDENTICAL FOR EVERY SYSTEM.
 %     - series from nonantest.sprott_series (uniform automatic sampling:
@@ -48,21 +61,32 @@ c = c([c.usable]);
 
 n = numel(c);
 name = strings(n,1); section = strings(n,1); category = strings(n,1);
-tier = strings(n,1); refLam = zeros(n,1);
+tier = strings(n,1); expected = zeros(n,1);
 wolf = nan(n,1); ros = nan(n,1);
+wolfDiff = nan(n,1); rosDiff = nan(n,1);
+wolfAbsDiff = nan(n,1); rosAbsDiff = nan(n,1);
 wolfRatio = nan(n,1); rosRatio = nan(n,1);
 tauUsed = nan(n,1); dimUsed = nan(n,1); note = strings(n,1);
 
 if opts.Verbose
-    fprintf('\n%-26s %-6s %9s %9s %6s %9s %6s\n', ...
-        'system','tier','ref','wolf','r','rosen','r');
-    fprintf('%s\n', repmat('-',1,76));
+    fprintf('\n%s\n', repmat('=',1,104));
+    fprintf('LyE benchmark against Sprott (2003) Appendix A. All values in NATS ' + ...
+            "per unit time.\n");
+    fprintf(['diff = observed - expected (signed, so the direction of the ' ...
+             'error is visible)\n']);
+    fprintf('ratio = observed / expected (1.00 = agreement)\n');
+    fprintf('%s\n', repmat('=',1,104));
+    fprintf('%-24s %-5s %9s | %9s %9s %8s %6s | %9s %9s %8s %6s\n', ...
+        'system','tier','expected', ...
+        'W obs','W diff','W |diff|','W r', ...
+        'R obs','R diff','R |diff|','R r');
+    fprintf('%s\n', repmat('-',1,104));
 end
 
 for i = 1:n
     s = c(i);
     name(i) = s.name; section(i) = s.section;
-    category(i) = s.category; tier(i) = s.tier; refLam(i) = s.lambda;
+    category(i) = s.category; tier(i) = s.tier; expected(i) = s.lambda;
 
     try
         [y, gi] = nonantest.sprott_series(s, opts.N);
@@ -104,18 +128,86 @@ for i = 1:n
         note(i) = "generation failed: " + string(ME.message);
     end
 
-    wolfRatio(i) = wolf(i) / refLam(i);
-    rosRatio(i)  = ros(i)  / refLam(i);
+    wolfDiff(i)    = wolf(i) - expected(i);
+    rosDiff(i)     = ros(i)  - expected(i);
+    wolfAbsDiff(i) = abs(wolfDiff(i));
+    rosAbsDiff(i)  = abs(rosDiff(i));
+    wolfRatio(i)   = wolf(i) / expected(i);
+    rosRatio(i)    = ros(i)  / expected(i);
 
     if opts.Verbose
-        fprintf('%-26s %-6s %9.4f %9.4f %6.2f %9.4f %6.2f  %s\n', ...
-            name(i), tier(i), refLam(i), wolf(i), wolfRatio(i), ...
-            ros(i), rosRatio(i), note(i));
+        fprintf('%-24s %-5s %9.4f | %9.4f %+9.4f %8.4f %6.2f | %9.4f %+9.4f %8.4f %6.2f', ...
+            name(i), tier(i), expected(i), ...
+            wolf(i), wolfDiff(i), wolfAbsDiff(i), wolfRatio(i), ...
+            ros(i),  rosDiff(i),  rosAbsDiff(i),  rosRatio(i));
+        if strlength(note(i)) > 0
+            fprintf('  <- %s', extractBefore(note(i) + " ", min(70, strlength(note(i))+1)));
+        end
+        fprintf('\n');
     end
 end
 
-R = table(name, section, category, tier, refLam, wolf, wolfRatio, ...
-          ros, rosRatio, tauUsed, dimUsed, note);
+R = table(name, section, category, tier, expected, ...
+          wolf, wolfDiff, wolfAbsDiff, wolfRatio, ...
+          ros,  rosDiff,  rosAbsDiff,  rosRatio, ...
+          tauUsed, dimUsed, note);
+
+if opts.Verbose
+    summarise(R);
+end
+end
+
+% ---------------------------------------------------------------- reporting
+
+function summarise(R)
+%SUMMARISE Per-estimator and per-category accuracy.
+%
+% Both a difference and a ratio are reported because neither alone is
+% adequate here. Reference exponents span 0.0064 (Henon area-preserving) to
+% 8.87 (linear congruential), a factor of 1400, so a raw difference is
+% dominated by the large-lambda systems and a ratio is dominated by the
+% small-lambda ones. Median absolute difference says how far off in nats;
+% median ratio says how far off proportionally. A method can look good on one
+% and bad on the other, and that disagreement is itself informative.
+
+ok = R(strlength(R.note) == 0, :);
+fprintf('\n%s\n', repmat('=',1,104));
+fprintf('SUMMARY  (%d of %d systems scored; %d excluded by protocol guards)\n', ...
+    height(ok), height(R), height(R) - height(ok));
+fprintf('%s\n', repmat('=',1,104));
+
+fprintf('\n%-24s %4s | %9s %9s %8s %8s | %9s %9s %8s %8s\n', ...
+    'category','n', ...
+    'W med|d|','W med r','W<=25%','W<=50%', ...
+    'R med|d|','R med r','R<=25%','R<=50%');
+fprintf('%s\n', repmat('-',1,104));
+
+cats = unique(ok.category, 'stable');
+for k = 1:numel(cats)
+    sub = ok(ok.category == cats(k), :);
+    printRow(char(cats(k)), sub);
+end
+fprintf('%s\n', repmat('-',1,104));
+printRow('ALL', ok);
+
+ex = ok(ok.tier == "exact", :);
+if height(ex) > 0
+    fprintf('%s\n', repmat('-',1,104));
+    printRow('exact-lambda only', ex);
+end
+fprintf('\n');
+end
+
+function printRow(label, T)
+w = T.wolfRatio(isfinite(T.wolfRatio));
+r = T.rosRatio(isfinite(T.rosRatio));
+wd = T.wolfAbsDiff(isfinite(T.wolfAbsDiff));
+rd = T.rosAbsDiff(isfinite(T.rosAbsDiff));
+pc = @(v, p) 100 * nnz(abs(v - 1) <= p) / max(1, numel(v));
+fprintf('%-24s %4d | %9.4f %9.2f %7.0f%% %7.0f%% | %9.4f %9.2f %7.0f%% %7.0f%%\n', ...
+    label, height(T), ...
+    median(wd), median(w), pc(w, 0.25), pc(w, 0.50), ...
+    median(rd), median(r), pc(r, 0.25), pc(r, 0.50));
 end
 
 % ---------------------------------------------------------------- helpers
