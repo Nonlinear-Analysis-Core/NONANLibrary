@@ -1,3 +1,22 @@
+> # ⚠️ This repository is deprecated
+>
+> **Development has stopped, effective immediately.**
+>
+> The Nonlinear Analysis Core is now the **Quantitative Analysis Research
+> Core (QUARC)**, and this library has moved:
+>
+> ### → https://github.com/Quantitative-Analysis-Research-Core/quarc-nonlinear
+>
+> The new repository carries the full commit history of this one, so nothing
+> is lost. It also contains corrections to defects found in an audit of this
+> code, including several that silently produced wrong numbers. See its
+> README for the list.
+>
+> **This repository will be removed after 31 December 2026.** Clone or fork
+> anything you still need before then, and move to the new repository.
+>
+> No further issues or pull requests will be accepted here.
+
 # NONANToolbox
 
 ## INSTALLATION
