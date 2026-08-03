@@ -87,10 +87,24 @@ y= y-m(ones(r,1),:);
 fy = fft(y);
 
 % randomizing phase
-phase= rand(r,1);
-phase= phase(:,ones(1,c));
-
-rot= exp(1) .^ (2*pi*sqrt(-1)*phase);
+% Randomise the phase of the positive frequencies only, then mirror the
+% conjugate onto the negative frequencies. This makes the rotated spectrum
+% conjugate symmetric, so the inverse transform is real by construction and
+% |FFT| is preserved exactly, which is the definition of a Fourier transform
+% surrogate. Drawing an independent phase for every bin leaves the spectrum
+% without that symmetry, so ifft returns a complex series and real() discards
+% the imaginary part, losing half the energy.
+% DC is left unrotated, as is the Nyquist bin when r is even, since both must
+% remain real. One phase draw is shared across columns, as before, so the
+% cross-spectra of a multivariate input are preserved.
+nHalf = floor((r-1)/2);
+rot = ones(r,1);
+if nHalf > 0
+    ph = 2*pi*rand(nHalf,1);
+    rot(2:nHalf+1) = exp(1i*ph);
+    rot(r:-1:r-nHalf+1) = conj(exp(1i*ph));
+end
+rot = rot(:,ones(1,c));
 fyy= fy .* rot;
 
 yy= real(ifft(fyy)) +  m(ones(r,1),:);
