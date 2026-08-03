@@ -1,55 +1,49 @@
 function [tau, curve, info] = ami_kde(x, L, opts)
-%AMI_KDE Average mutual information vs lag, Gaussian kernel density estimator.
+%AMI_KDE Average mutual information versus lag, kernel density estimator.
+%   TAU = AMI_KDE(X,L) returns the lag of the first local minimum of the
+%   average mutual information of X with itself over lags 0:L, using Gaussian
+%   kernel density estimates of the marginal and joint densities.
 %
-%   [tau, curve] = AMI_KDE(x, L) returns the lag of the first local minimum
-%   of the average mutual information of x with itself over lags 0:L.
+%   [TAU,CURVE] = AMI_KDE(X,L) also returns the AMI curve as an (L+1)-by-2
+%   array of [lag, ami], in bits.
 %
-%   This is the estimator published as AMI_Thomas: marginal densities from a
-%   univariate Gaussian kernel, the joint density from a bivariate Gaussian
-%   kernel whose covariance carries the sample correlation, and
+%   [TAU,CURVE,INFO] = AMI_KDE(X,L) also returns a struct with fields
+%   allMinima, usedFallback, fractionLag and estimator.
 %
-%       I = (1/n) * sum_i log2( p_xy(i) / (p_x(i) * p_y(i)) )
+%   ___ = AMI_KDE(X,L,Fraction=F) sets the fallback threshold, as a fraction
+%   of AMI at lag 0, used when the curve has no local minimum. Default 0.2.
 %
-%   evaluated at the data points themselves. Bandwidths follow
-%   h = std / n^(1/6), the standard bivariate Silverman-type rule.
+%   ___ = AMI_KDE(X,L,ChunkSize=C) sets how many rows of the pairwise kernel
+%   are evaluated at once. Default 512. Lower it to reduce peak memory; it
+%   does not change the result.
 %
-%   Numerically identical to the original to ~1e-12; see tests/matlab.
+%   Input Arguments
+%      X  time series, real column vector, no NaN
+%      L  maximum lag, positive integer, less than numel(X)
 %
-%   WHAT CHANGED, AND WHY IT MATTERS
-%   The original spent its time and memory building matrices it did not need:
+%   Notes
+%   Marginals use a univariate Gaussian kernel with bandwidth std(X)/N^(1/6).
+%   The joint density uses a bivariate Gaussian kernel whose covariance
+%   carries the sample correlation. Densities are evaluated at the data
+%   points and AMI is the mean log2 ratio.
 %
-%     * `Extended(v, n)` replicated a vector by LOOPING n times to fill rows
-%       of a preallocated matrix. That is repmat, and with implicit expansion
-%       it is not needed at all.
-%     * `linear_depth` built TWO full n^2-by-2 matrices (`Blocks`, `Bricks`)
-%       and added them, purely to enumerate every pairwise difference, before
-%       passing the result to mvnpdf as one n^2-row call.
-%     * Block sums were then recovered by `cumsum` over all n^2 rows followed
-%       by differencing every n-th element. Beyond being indirect, that loses
-%       precision: cumsum accumulates over the whole array, so each block sum
-%       is a difference of two large and nearly equal partial sums.
+%   Cost is O(L*N^2) kernel evaluations, substantially slower than
+%   AMI_HISTOGRAM, in exchange for lower bias. Peak memory is O(ChunkSize*N).
 %
-%   Peak memory for the joint density was therefore ~5 n^2 doubles. Here it is
-%   O(ChunkSize * n), bounded by a name-value argument, and the block sums are
-%   computed directly.
+%   Runs on base MATLAB. No toolbox required.
 %
-%   It also dropped its Statistics Toolbox dependency: corr, mvnpdf and
-%   normpdf are all replaced with closed forms, so the function now runs on
-%   base MATLAB.
-%
-%   Name-value arguments
-%     Fraction   fallback threshold as a fraction of AMI at lag 0. Default 0.2.
-%     ChunkSize  rows of the pairwise kernel evaluated at once. Default 512.
-%                Lower it if memory is tight; it does not change the result.
-%
-%   COST. This is O(L * n^2) kernel evaluations and is much slower than
-%   Algorithm="histogram". It is the better estimator of the AMI VALUE; the
-%   histogram is usually enough to locate a minimum.
+%   Examples
+%      tau = ami_kde(x, 50);
+%      tau = ami_kde(x, 50, ChunkSize=128);   % lower peak memory
 %
 %   References
-%     Thomas, R. D., Moses, N. C., Semple, E. A. & Strang, A. J. (2014). An
-%       efficient algorithm for the computation of average mutual information.
-%     Fraser, A. M. & Swinney, H. L. (1986). Physical Review A, 33, 1134.
+%      Thomas, R. D., Moses, N. C., Semple, E. A. and Strang, A. J. (2014).
+%      An efficient algorithm for the computation of average mutual
+%      information. Behavior Research Methods.
+%
+%      Fraser, A. M. and Swinney, H. L. (1986). Independent coordinates for
+%      strange attractors from mutual information. Physical Review A, 33(2),
+%      1134-1140.
 %
 %   See also AMI, AMI_HISTOGRAM.
 
@@ -101,8 +95,7 @@ I = sum(log2(pXY(ok) ./ (pX(ok) .* pY(ok)))) / n;
 end
 
 function p = marginalDensity(v, h, chunk)
-%MARGINALDENSITY Gaussian KDE evaluated at the sample points.
-%   normpdf(z) = exp(-z^2/2)/sqrt(2*pi), inlined to avoid the toolbox.
+%MARGINALDENSITY Gaussian KDE at the sample points. normpdf inlined.
 n = numel(v);
 p = zeros(n, 1);
 c = 1 / (n * h * sqrt(2*pi));
@@ -114,11 +107,8 @@ end
 end
 
 function p = jointDensity(X, Y, hx, hy, chunk)
-%JOINTDENSITY Bivariate Gaussian KDE with correlated kernel.
-%
-%   Covariance W = [hx^2, r*hx*hy; r*hx*hy, hy^2] where r is the sample
-%   correlation of (X, Y). The closed form of the bivariate normal density is
-%   used directly rather than calling mvnpdf on an n^2-row argument.
+%JOINTDENSITY Bivariate Gaussian KDE, covariance [hx^2 r*hx*hy; r*hx*hy hy^2].
+% Closed form rather than mvnpdf, to avoid the Statistics Toolbox.
 n = numel(X);
 r = pearson(X, Y);
 r = min(max(r, -0.999999), 0.999999);         % keep the kernel non-singular
@@ -142,7 +132,7 @@ r = (a.' * b) / (norm(a) * norm(b));
 end
 
 function [tau, info] = firstMinimum(curve, fraction)
-%FIRSTMINIMUM Lag of the first strict local minimum. See ami_histogram.
+%FIRSTMINIMUM Lag of the first strict local minimum. See AMI_HISTOGRAM.
 v = curve(:, 2);
 isMin = [false; v(2:end-1) < v(1:end-2) & v(2:end-1) <= v(3:end); false];
 idx = find(isMin);

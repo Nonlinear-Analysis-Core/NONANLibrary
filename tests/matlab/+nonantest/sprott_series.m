@@ -10,29 +10,18 @@ function [y, info] = sprott_series(sys, n, opts)
 %     info.period    estimated dominant period, in samples
 %     info.degenerate  true if the orbit collapsed or diverged
 %
-%   UNIFORM PROTOCOL, DELIBERATELY NOT TUNED PER SYSTEM.
-%   Every flow is integrated with RK4 at the catalogue's dt, a transient of
-%   20000 steps is discarded, and the decimation is then chosen so that the
-%   DOMINANT SPECTRAL PERIOD lands near 40 samples. Maps are iterated
-%   directly with a 1000-step transient and no decimation.
+%   Protocol, uniform across all systems and not tuned per system. Flows are
+%   integrated with RK4 at the catalogue's dt, a 20000-step transient is
+%   discarded, and decimation is chosen so the dominant spectral period lands
+%   near TargetPeriod samples. Maps are iterated directly after a 1000-step
+%   transient. The systems' natural timescales span three orders of
+%   magnitude, so a single fixed rate would score estimators mostly on that
+%   mismatch.
 %
-%   Choosing the sample rate from each system's own dominant period is the
-%   only way to compare 62 systems whose natural timescales span three orders
-%   of magnitude. The alternative -- one fixed dt for all -- would undersample
-%   the fast systems and oversample the slow ones, and any estimator would
-%   then be scored mostly on that mismatch. Hand-tuning each system
-%   separately would be worse still: it would let a bad estimator be rescued
-%   case by case, which is exactly what a benchmark must not permit.
-%
-%   The protocol is uniform, automatic, and stated. Systems where an
-%   estimator fails under it are real results.
-%
-%   DEGENERACY CHECKS. Deterministic chaotic systems can still die in
-%   floating point -- an orbit can collapse to a fixed point, diverge, or
-%   exhaust the mantissa (the dyadic tent map is exactly a binary shift and
-%   reaches exactly 0 after ~50 iterations). Any of these produces a series
-%   that looks fine to a caller and is meaningless. They are detected here
-%   and flagged rather than returned silently.
+%   Degeneracy checks. An orbit can collapse to a fixed point, diverge,
+%   exhaust the mantissa, or drift without bound, each producing a series
+%   that looks valid to a caller. These are flagged in info.degenerate rather
+%   than returned silently.
 
 arguments
     sys (1,1) struct

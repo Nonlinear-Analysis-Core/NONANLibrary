@@ -29,17 +29,14 @@ function c = sprott_catalog(name)
 %   results are original calculations, and all have been independently
 %   verified."
 %
-%   WHY THIS IS A LEGITIMATE BENCHMARK DESPITE BEING NUMERICAL. Nine of the
-%   62 systems have lambda in closed form, and the appendix reproduces them:
-%   the logistic entry reads 0.693147181 against ln 2 = 0.6931471806. A
-%   catalogue that recovers the exact answer wherever one exists is evidence
-%   about its own method. The exact nine are marked tier "exact" and can be
-%   asserted tightly; the rest are order-of-magnitude and ordering checks.
+%   Systems whose lambda is a closed form are marked tier "exact" and can be
+%   asserted tightly; the rest are order-of-magnitude checks. The appendix
+%   reproduces the exact cases it contains, e.g. the logistic entry reads
+%   0.693147181 against ln 2 = 0.6931471806.
 %
-%   CONSERVATIVE SYSTEMS carry lambda = +x, 0, -x by symplectic symmetry.
-%   Only the largest is stored. Their exponents are small (0.006 to 0.16),
-%   which makes them the hardest cases in the set and the most informative
-%   about an estimator's noise floor.
+%   Conservative systems carry lambda = +x, 0, -x by symplectic symmetry;
+%   only the largest is stored. Their exponents are small (0.006 to 0.16) and
+%   are the most demanding cases in the set.
 
 S = {};
 

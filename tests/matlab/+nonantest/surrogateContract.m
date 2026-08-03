@@ -5,21 +5,17 @@ function r = surrogateContract(x, gen, nSurr)
 %
 %   gen is a function handle producing ONE surrogate: @(v) Surr_Theiler(v,1).
 %
-%   Returns a struct of measured quantities. It asserts nothing -- the caller
-%   decides which contract applies, because the contract differs by algorithm
-%   and conflating them is the trap:
+%   Returns measured quantities and asserts nothing; the caller decides which
+%   contract applies, since it differs by algorithm:
 %
 %     Algorithm 0 (shuffle) : distribution EXACT,   spectrum destroyed BY DESIGN
 %     Algorithm 1 (FT)      : spectrum EXACT,       distribution Gaussianised
 %     Algorithm 2 (AAFT)    : distribution EXACT,   spectrum APPROXIMATE by design
 %     IAAFT                 : distribution EXACT,   spectrum close
 %
-%   "Exact" means machine precision, ~1e-15, not "small". An FT surrogate is
-%   DEFINED by |FFT(surrogate)| == |FFT(original)| realisation by realisation.
-%   A spectral error of 0.25 is not a tolerance question, it is a different
-%   algorithm. Conversely, holding Algorithm 2 to exact spectral preservation
-%   would be reporting its design as a defect -- approximating the spectrum is
-%   precisely the weakness IAAFT was built to reduce.
+%   "Exact" means machine precision. An FT surrogate is defined by
+%   |FFT(surrogate)| == |FFT(original)| realisation by realisation. Holding
+%   AAFT to that standard would report its design as a defect.
 %
 %   Fields:
 %     spectral_error       ||P(z) - P(x)|| / ||P(x)||, mean over surrogates
