@@ -74,6 +74,23 @@ tc.verifyEmpty(hits, sprintf( ...
     numel(hits), localFormat(hits)));
 end
 
+function testAllShippedNamesAreSnakeCase(tc)
+% Every shipped function is lower_snake_case, with no date suffixes. Names
+% carrying a date predate version control and say nothing git does not.
+% Shims for the old names live in matlab/deprecated/ and are exempt.
+bad = {};
+for i = 1:numel(tc.TestData.mfiles)
+    [~, base] = fileparts(tc.TestData.mfiles{i});
+    if ~isempty(regexp(base, '[A-Z]', 'once'))
+        bad{end+1} = sprintf('  %s (contains uppercase)', base); %#ok<AGROW>
+    elseif ~isempty(regexp(base, '\d{6,8}', 'once'))
+        bad{end+1} = sprintf('  %s (date suffix)', base); %#ok<AGROW>
+    end
+end
+tc.verifyEmpty(bad, sprintf( ...
+    'Shipped functions not in lower_snake_case:\n%s', strjoin(bad, newline)));
+end
+
 function testFileNameMatchesFunctionName(tc)
 bad = {};
 for i = 1:numel(tc.TestData.mfiles)

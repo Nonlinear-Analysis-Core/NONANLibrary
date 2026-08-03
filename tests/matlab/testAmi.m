@@ -145,7 +145,7 @@ function testKdeMatchesOriginalAmiThomas(tc)
 % performance change and must not move a digit that matters.
 x = tc.TestData.lorenz;
 L = 20;
-[~, old] = AMI_Thomas(x, L);          % original indexes lags 1..L
+[~, old] = ami_thomas(x, L);          % original indexes lags 1..L
 [~, new] = ami_kde(x, L);             % new indexes lags 0..L
 d = max(abs(old(:,2) - new(2:end,2)));
 tc.verifyLessThan(d, 1e-9, sprintf( ...
@@ -155,7 +155,7 @@ end
 function testKdeIsFasterThanOriginal(tc)
 x = nonantest.signals('lorenz', 1000);
 L = 15;
-t1 = tic; AMI_Thomas(x, L); tOld = toc(t1);
+t1 = tic; ami_thomas(x, L); tOld = toc(t1);
 t2 = tic; ami_kde(x, L);    tNew = toc(t2);
 fprintf('    [perf] ami_kde %.2fs vs AMI_Thomas %.2fs (%.1fx)\n', tNew, tOld, tOld/tNew);
 tc.verifyLessThan(tNew, tOld, 'the refactor should not be slower');

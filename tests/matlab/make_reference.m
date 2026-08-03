@@ -37,7 +37,7 @@ for i = 1:numel(series)
 end
 
 y = readmatrix(fullfile(fx, 'ar1_phi70_512.csv'));
-ref.ent_samp.ar1_phi70_512 = Ent_Samp(y, 2, 0.2);
+ref.ent_samp.ar1_phi70_512 = ent_samp(y, 2, 0.2);
 
 y = readmatrix(fullfile(fx, 'lorenz_2048.csv'));
 ref.ami_thomas.lorenz_2048 = localFirstMinAmi(y);
@@ -52,7 +52,7 @@ end
 
 function v = localFirstMinAmi(y)
 try
-    a = AMI_Thomas(y, 20);
+    a = ami_thomas(y, 20);
     v = a(1, 1);
 catch ME
     v = NaN;

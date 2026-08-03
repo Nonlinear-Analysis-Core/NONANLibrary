@@ -3,7 +3,7 @@ function r = surrogateContract(x, gen, nSurr)
 %
 %   r = nonantest.surrogateContract(x, gen, nSurr)
 %
-%   gen is a function handle producing ONE surrogate: @(v) Surr_Theiler(v,1).
+%   gen is a function handle producing ONE surrogate: @(v) surr_theiler(v,1).
 %
 %   Returns measured quantities and asserts nothing; the caller decides which
 %   contract applies, since it differs by algorithm:

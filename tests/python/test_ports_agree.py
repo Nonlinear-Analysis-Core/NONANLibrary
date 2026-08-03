@@ -94,7 +94,7 @@ class TestEntSampPortMatchesMatlab(unittest.TestCase):
         import Ent_Samp as es
         y = nonantest.fixture("ar1_phi70_512")
         want = REF["ent_samp"]["ar1_phi70_512"]
-        got = float(np.asarray(es.Ent_Samp(y, 2, 0.2)).squeeze())
+        got = float(np.asarray(es.ent_samp(y, 2, 0.2)).squeeze())
         self.assertAlmostEqual(
             got, want, places=10,
             msg=(f"Ent_Samp.py {got!r} vs Ent_Samp.m {want!r} "

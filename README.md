@@ -44,26 +44,54 @@ For documentation related to this library, we have a GitHub page hosted [here](h
 
 This is a list of the included functions and the full name of the methods.
 
-1)  AMI_Stergiou, This is a histogram-based method of Average Mutual Information that is used to find a time lag using average mutual information for state space reconstruction.
-2)  AMI_Thomas, This is a kernal density-based method of Average Mutual Information that is used to find a time lag for state space reconstruction.
-3)  ChaosLibrary, This uses a number of systems of differential equations that can be used to create chaotic attractors.
-4)  dfa, This is used to calculate an alpha by way of Detrended Fluctuation Analysis.
-5)  Ent_Ap, Used to calculate the Approximate Entropy of a time series.
-6)  Ent_MS_Plus, Used to calculate the Refined Composite Multiscale Sample Entropy, Composite Multiscale Entropy, Multiscale Entropy, Multiscale Fuzzy Entropy, and Generalized Multiscale Entropy of a time series.
-7)  Ent_Permu, Used to calculate the Permutation Entropy of a time series using a log of base 2.
-8)  Ent_Samp, Used to calculate the Sample Entropy of a time series.
-9)  Ent_Symbolic, Used to calculate the Symbolic Entropy of a time series.
-10) Ent_xAp, Uses Apprimate Entropy to calculate the Cross Approximate Entropy between two time series.
-11) Ent_xSamp, Uses Sample Entropy to calculate the Cross Sample Entropy between two time series.
-12) FNN, Calculates an embedding dimension for state space reconstruction using the method of False Nearest Neighbors.
-13) LyE_R, Calculates the Largest Lyapunov Exponent using the method published by Rosenstein.
-14) LyE_W, Calculates the Largest Lyapunov Exponent using the method published by Wolf.
-15) RelPhase_Cont, This Continuous Relative Phase script can be used to find the phase between two cyclic time series.
-16) RelPhase_Disc, This Discrete Relative Phase script can be used to find the phase between two discrete time series.
-17) RQA, Can be used to perform Recurrance Quantification Analysis.
-18) Surr_findrho, This should be used to find thee optimal noise level used in creating a Pseudo Period surrogate time series.
-19) Surr_PseudoPeriodic, This is used to find a Pseudo Period surrogate time series using the result from Surr_findrho.
-20) Surr_Theiler, This can be used to create different surrogates by the methods published by Theiler.
+All function and file names are lower_snake_case. The previous names still
+work through shims in `matlab/deprecated/`; add that folder to your path if
+you need them, and they will warn once per session.
+
+| function | description |
+|---|---|
+| `ami` | Average mutual information versus lag, for choosing an embedding delay. Wrapper over `ami_histogram` and `ami_kde`. |
+| `ami_histogram` | AMI by equal-width joint histogram. |
+| `ami_kde` | AMI by Gaussian kernel density estimate. |
+| `chaos_library` | Systems of differential equations that produce chaotic attractors. |
+| `corr_dim` | Correlation dimension. |
+| `crqa` | Cross recurrence quantification analysis. |
+| `dfa` | Detrended fluctuation analysis. |
+| `embed` | Delay embedding of a time series. |
+| `ent_ap` | Approximate entropy. |
+| `ent_ms_plus` | Refined composite multiscale, composite multiscale, multiscale, multiscale fuzzy, and generalized multiscale entropy. |
+| `ent_permu` | Permutation entropy, log base 2. |
+| `ent_samp` | Sample entropy. |
+| `ent_symbolic` | Symbolic entropy. |
+| `ent_weighted` | Weighted entropy of a recurrence plot. |
+| `ent_xap` | Cross approximate entropy between two series. |
+| `ent_xsamp` | Cross sample entropy between two series. |
+| `fgn_sim` | Simulate fractional Gaussian noise at a specified Hurst exponent. |
+| `fnn` | Embedding dimension by false nearest neighbours. |
+| `jrqa` | Joint recurrence quantification analysis. |
+| `line_hist` | Diagonal and vertical line histograms of a recurrence plot. |
+| `lye_r` | Largest Lyapunov exponent, Rosenstein's method. Returns the divergence curve. |
+| `lye_w` | Largest Lyapunov exponent, Wolf's method. Returns bits per unit time. |
+| `mdrqa` | Multidimensional recurrence quantification analysis. |
+| `psr` | Phase space reconstruction. |
+| `rel_phase_cont` | Continuous relative phase between two cyclic series. |
+| `rel_phase_disc` | Discrete relative phase between two series. |
+| `rqa` | Recurrence quantification analysis. |
+| `rqa_legacy` | Previous combined RQA/cRQA/jRQA/mdRQA entry point, kept for reproducibility. |
+| `rqa_plot` | Plot a recurrence plot and its statistics. |
+| `set_radius` | Find the radius giving a target percent recurrence. |
+| `surr_find_rho` | Optimal noise radius for a pseudo-periodic surrogate. |
+| `surr_pseudo_periodic` | Pseudo-periodic surrogate, using the radius from `surr_find_rho`. |
+| `surr_theiler` | Theiler surrogates: shuffle, Fourier transform, and amplitude-adjusted Fourier transform. |
+
+### TESTS
+
+```
+matlab -batch "addpath('tests/matlab'); run_tests"
+python3 tests/python/run_tests.py
+```
+
+Headless, base MATLAB only, exits nonzero on failure. See `tests/README.md`.
 
 COPYRIGHT
 
