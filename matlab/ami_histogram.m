@@ -1,64 +1,50 @@
 function [tau, curve, info] = ami_histogram(x, L, opts)
-%AMI_HISTOGRAM Average mutual information vs lag, equal-width histogram estimator.
+%AMI_HISTOGRAM Average mutual information versus lag, histogram estimator.
+%   TAU = AMI_HISTOGRAM(X,L) returns the lag of the first local minimum of
+%   the average mutual information of X with itself over lags 0:L, using an
+%   equal-width joint histogram.
 %
-%   [tau, curve] = AMI_HISTOGRAM(x, L) returns the lag of the first local
-%   minimum of the average mutual information of x with itself, over lags
-%   0:L, together with the full AMI curve.
+%   [TAU,CURVE] = AMI_HISTOGRAM(X,L) also returns the AMI curve as an
+%   (L+1)-by-2 array of [lag, ami], in bits.
 %
-%   [tau, curve, info] = AMI_HISTOGRAM(...) also returns diagnostics.
+%   [TAU,CURVE,INFO] = AMI_HISTOGRAM(X,L) also returns a struct with fields
+%   allMinima, usedFallback, fractionLag, bins, samplesPerLag and estimator.
 %
-%   Name-value arguments
-%     Bins      number of bins per axis. Default [] selects Scott's rule.
-%     Fraction  fallback threshold, as a fraction of AMI at lag 0, used when
-%               no local minimum exists. Default 0.2 (Abarbanel et al. 1993).
+%   ___ = AMI_HISTOGRAM(X,L,Bins=B) sets the number of bins per axis.
+%   Default selects B by Scott's rule.
 %
-%   WHY THE FIRST MINIMUM
-%   For delay embedding you want coordinates that are neither redundant
-%   (tau too small, x(t) ~ x(t+tau)) nor causally disconnected (tau too
-%   large). Mutual information measures general dependence rather than only
-%   linear correlation, so its first minimum is the standard choice.
-%   Fraser & Swinney (1986) is the origin of that criterion.
+%   ___ = AMI_HISTOGRAM(X,L,Fraction=F) sets the fallback threshold, as a
+%   fraction of AMI at lag 0, used when the curve has no local minimum.
+%   Default 0.2.
 %
-%   ESTIMATOR, STATED HONESTLY
-%   This is an equal-width (fixed-bin) histogram estimator. Fraser & Swinney's
-%   own algorithm is a RECURSIVE ADAPTIVE PARTITION, which is not what this
-%   computes -- naming this function after them would be a misattribution of
-%   the same kind the old name made in the other direction. The first-minimum
-%   criterion is theirs; the estimator is a plain histogram.
+%   Input Arguments
+%      X  time series, real column vector, no NaN
+%      L  maximum lag, positive integer, less than numel(X)
 %
-%   Histogram AMI is biased upward at small bin counts and noisy at large
-%   ones, and Scott's rule is a UNIVARIATE density heuristic being applied to
-%   a bivariate histogram. It is adequate for locating a minimum, which only
-%   needs the shape of the curve, and unreliable as an absolute nats/bits
-%   value. Use ami(..., Algorithm="kde") or a future estimator if you need
-%   the value itself.
+%   Notes
+%   Every lag uses the same number of pairs, N-L rather than N-lag, so the
+%   curve is not confounded by a changing sample size.
 %
-%   TODO -- estimators worth adding, roughly in order of value here:
-%     * adaptive partition  -- Fraser & Swinney's actual 1986 algorithm.
-%     * knn / KSG           -- Kraskov, Stogbauer & Grassberger (2004).
-%                              Bin-free, much lower bias, the modern default.
-%     * copula              -- rank-transform to uniform marginals, estimate
-%                              the copula density. Invariant to monotone
-%                              transforms of the signal, which is attractive
-%                              for biomechanical data with arbitrary units.
-%     * kde variants        -- adaptive/variable bandwidth rather than the
-%                              fixed Silverman-type rule used by "kde".
+%   The plug-in histogram estimate is biased upward. For independent data the
+%   bias is approximately (Bx-1)(By-1)/(2*N*ln2) bits, so at N = 2000 with
+%   Scott's rule the floor is about 0.17 bits. Where the true AMI is smaller
+%   than that, the curve reflects the estimator rather than the signal. Use
+%   AMI_KDE when the AMI value itself matters; the histogram is adequate for
+%   locating a minimum.
 %
-%   Constant sample size across lags: every lag uses N-L pairs, not N-lag.
-%   Otherwise the curve confounds a change in dependence with a change in
-%   sample size, and histogram AMI is strongly N-dependent.
+%   Runs on base MATLAB. No toolbox required.
 %
-%   Base MATLAB only -- no Statistics Toolbox.
+%   Examples
+%      tau = ami_histogram(x, 50);
+%      [tau, curve, info] = ami_histogram(x, 50, Bins=32);
 %
 %   References
-%     Fraser, A. M. & Swinney, H. L. (1986). Independent coordinates for
-%       strange attractors from mutual information. Physical Review A,
-%       33(2), 1134-1140.
-%     Scott, D. W. (1979). On optimal and data-based histograms.
-%       Biometrika, 66(3), 605-610.
-%     Abarbanel, H. D. I., Brown, R., Sidorowich, J. J. & Tsimring, L. S.
-%       (1993). The analysis of observed chaotic data in physical systems.
-%       Reviews of Modern Physics, 65(4), 1331-1392.
+%      Fraser, A. M. and Swinney, H. L. (1986). Independent coordinates for
+%      strange attractors from mutual information. Physical Review A, 33(2),
+%      1134-1140.
+%
+%      Scott, D. W. (1979). On optimal and data-based histograms.
+%      Biometrika, 66(3), 605-610.
 %
 %   See also AMI, AMI_KDE.
 
@@ -115,14 +101,7 @@ nBins = max(2, ceil((max(x) - min(x)) / h));
 end
 
 function edges = binEdges(x, nBins)
-%BINEDGES Equal-width edges spanning the data, closed at the top.
-%
-% The old implementation scaled with `1 + floor(v / (max/(bins-eps)))`, where
-% `eps` is 2.2e-16 and eps(bins) is ~3.6e-15 for realistic bin counts -- so
-% `bins - eps == bins` exactly and the subtraction did nothing. The maximum
-% sample therefore landed in bin bins+1, giving one extra bin holding exactly
-% one point. linspace edges plus histcounts' closed final bin is the correct
-% and obvious way to say what was intended.
+%BINEDGES Equal-width edges spanning the data. histcounts closes the last bin.
 lo = min(x);
 hi = max(x);
 if hi == lo
@@ -150,11 +129,7 @@ end
 
 function [tau, info] = firstMinimum(curve, fraction)
 %FIRSTMINIMUM Lag of the first strict local minimum of the AMI curve.
-%
-% The old test used >= and <=, so every interior point of a plateau counted
-% as a minimum and adjacent noise-level wiggles were both reported. Requiring
-% a strict decrease on the left removes plateaus; a run of equal values can
-% still only contribute its first element.
+% Strict on the left, so a plateau contributes at most its first point.
 v = curve(:, 2);
 isMin = [false; v(2:end-1) < v(1:end-2) & v(2:end-1) <= v(3:end); false];
 idx = find(isMin);

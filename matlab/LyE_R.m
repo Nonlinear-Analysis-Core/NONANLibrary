@@ -21,16 +21,13 @@ function [varargout]=LyE_R(X,Fs,tau,dim,varargin)
 %                 displaying the regression lines. This figure is visible
 %                 by default.
 % [...]=LyE_R(...,'TheilerWindow',w)
-% inputs  - w, half-width in SAMPLES of the temporal exclusion around each
-%              point when searching for its nearest neighbour (the Theiler
-%              window). Candidates within +/- w of a point are excluded, so
-%              the match is a genuine return to the neighbourhood rather than
-%              an adjacent sample on the same trajectory segment. The default
-%              is round(tau*0.8), which preserves previous behaviour. Set it
-%              from the dominant period, or from the first minimum of the
-%              autocorrelation or AMI, when tau is small relative to the
-%              orbit. Accepted in both the four-argument and the
-%              slope-fitting call forms.
+% inputs  - w, half-width in samples of the temporal exclusion applied when
+%              searching for each point's nearest neighbour. Candidates
+%              within +/-w are excluded so the match is a return to the
+%              neighbourhood rather than an adjacent sample on the same
+%              trajectory. Default round(tau*0.8). Set it from the dominant
+%              period when tau is small relative to the orbit. Accepted in
+%              both call forms.
 % outputs - LyES, short/local lyapunov exponent
 %         - LyEL, long/orbital lyapunov exponent
 % Remarks
@@ -110,9 +107,8 @@ function [varargout]=LyE_R(X,Fs,tau,dim,varargin)
 %%
 
 
-% Pull the optional 'TheilerWindow' name-value pair out of varargin before
-% the legacy positional arguments {slope, MeanPeriod, file} are read, so both
-% call forms keep working unchanged.
+% Extract the optional 'TheilerWindow' pair before the positional arguments
+% {slope, MeanPeriod, file} are read, so both call forms are unaffected.
 theilerWindow=[];
 k=1;
 while k < numel(varargin)
@@ -125,7 +121,6 @@ while k < numel(varargin)
     end
 end
 if isempty(theilerWindow)
-    % Default preserves the historical behaviour: exclude +/- round(tau*0.8).
     theilerWindow=round(tau*0.8);
 end
 if ~isscalar(theilerWindow) || ~isfinite(theilerWindow) || theilerWindow < 0
@@ -170,18 +165,9 @@ for i=1:M
     Ydiff=(Yinit-Y(1:M,:)).^2;
     Ydisti=sqrt(sum(Ydiff,2));
     
-    % Exclude points too close in time (the Theiler window). These are the
-    % same trajectory segment rather than a separate pass near the same
-    % point, so pairing with them measures interpolation, not divergence.
-    %
-    % The exclusion marker must be larger than any real distance. It was
-    % previously the literal constant 1e5, which is not: once the data are
-    % scaled so that inter-point distances exceed 1e5, the "excluded" points
-    % become the MINIMUM and every point is paired with its own immediate
-    % temporal neighbour. Measured on a Lorenz series, the exponent fell to
-    % 8% of its correct value at scale 1e6, with 90% of pairs inside the
-    % exclusion window - silently, and in the direction that reads as "more
-    % stable". Inf cannot be beaten by any finite distance at any scale.
+    % Exclude candidates within the Theiler window: these lie on the same
+    % trajectory segment, so matching them measures interpolation rather than
+    % divergence. Inf is used so the exclusion holds at any data scale.
     range_exclude=i-theilerWindow:i+theilerWindow;
     range_exclude=range_exclude(range_exclude>=1 & range_exclude<=M);
     Ydisti(range_exclude)=Inf;
@@ -189,9 +175,7 @@ for i=1:M
     % find minimum distance point for first pair
     [~,IND2(i,1)]=min(Ydisti);
 end
-% Preallocate all three columns. Column 3 is written conditionally below, so
-% without this the function returns a 2-column array whenever no window has a
-% non-zero distance sum, and the caller's out(:,3) fails somewhere unrelated.
+% Three columns always: column 3 is written conditionally below.
 out=[(1:M)',IND2,zeros(M,1)]; % Matched pairs and average line divergence.
 
 %% Calculate distances between matched pairs.

@@ -7,21 +7,13 @@ function [slope, idx, info] = scaling_region(d, fs, opts)
 %   rate. Returns the fitted slope in natural log units per unit time, the
 %   indices used, and diagnostics.
 %
-%   WHY THIS EXISTS. LyE_R does not return an exponent -- it returns a curve,
-%   and the caller picks a window and fits a slope. That choice dominates the
-%   answer. Measured on one Lorenz series, fitting samples 2-30 gives 1.67
-%   and samples 10-150 gives 0.74, from identical data.
+%   The fitted window dominates the estimate: on one Lorenz series, samples
+%   2-30 give 1.67 and samples 10-150 give 0.74 from identical data. A fixed
+%   window also cannot serve both maps and flows, since a map's curve
+%   saturates within ~13 samples.
 %
-%   Worse, a single fixed window cannot serve both maps and flows. A map's
-%   divergence curve saturates within a few iterations: for the logistic map
-%   it is flat by sample 13, so a 5-50 window sits entirely on the plateau
-%   and returns a slope near zero. That is not an estimator failure, it is a
-%   window failure -- and it looks exactly like an estimator failure in a
-%   results table, which is how a benchmark ends up libelling a method.
-%
-%   METHOD. The scaling region is the initial, approximately linear rise
-%   before saturation. This searches windows anchored near the start of the
-%   curve and picks the one that is longest subject to staying linear:
+%   Method. The scaling region is the initial near-linear rise before
+%   saturation:
 %
 %     1. Locate saturation: the first index where the curve stops rising,
 %        taken as the first point that fails to exceed the running maximum by
@@ -32,11 +24,9 @@ function [slope, idx, info] = scaling_region(d, fs, opts)
 %        seen. Longest-among-near-best avoids picking a 3-point window that
 %        is trivially straight.
 %
-%   This is deliberately simple and inspectable. It is not the last word on
-%   scaling-region selection -- that is an open problem and a tracked task --
-%   but it is uniform, automatic, and stated, which is what a benchmark
-%   needs. Callers get idx and info back so the choice can be audited or
-%   plotted rather than trusted.
+%   idx and info are returned so the choice can be audited or plotted.
+%   Scaling-region selection is an open problem; this is a simple, uniform
+%   default, not a final answer.
 
 arguments
     d  (:,1) double
