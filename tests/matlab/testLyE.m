@@ -236,16 +236,43 @@ end
 % =================================================================
 
 function testLyE_W_DocumentedArgumentListWorks(tc)
-% The header documents
-%     LyE_W(X, Fs, tau, dim, evolve, SCALEMX, SCALEMN, ANGLMX, ZMULT)
-% but the body tests nargin == 8 and reads varargin{1:3} as SCALEMX, ANGLMX,
-% ZMULT. SCALEMN is documented and never implemented, so the documented
-% nine-argument call raises.
+% The header must describe a call that can actually be made. It previously
+% documented a nine-argument form including SCALEMN, but the body tests
+% nargin == 8 and reads varargin{1:3} as SCALEMX, ANGLMX, ZMULT -- SCALEMN
+% having been removed from the code, per the function's own changelog,
+% without the signature line being updated.
 s = nonantest.sideEffects(@() LyE_W(tc.TestData.lorenz, 1/0.03, 5, 3, 10, ...
-                                    1, 0.1, 30*pi/180, 1));
+                                    1, 30*pi/180, 1));
 tc.verifyFalse(s.errored, sprintf( ...
-    ['The documented 9-argument form of LyE_W fails: "%s".\n' ...
-     'Either implement SCALEMN or remove it from the header.'], localMsg(s)));
+    'The documented extended form of LyE_W fails: "%s".', localMsg(s)));
+
+% And the form that is no longer supported must not silently appear to work.
+s9 = nonantest.sideEffects(@() LyE_W(tc.TestData.lorenz, 1/0.03, 5, 3, 10, ...
+                                     1, 0.1, 30*pi/180, 1));
+tc.verifyTrue(s9.errored, ...
+    'A nine-argument call should raise, since SCALEMN is not implemented.');
+end
+
+function testLyE_W_HeaderDoesNotDocumentUnimplementedArguments(tc)
+here = fileparts(mfilename('fullpath'));
+src = fileread(fullfile(fileparts(fileparts(here)), 'matlab', 'LyE_W.m'));
+src = regexprep(src, '\r\n?', newline);
+head = extractBefore(src, min(strlength(src), 4000));
+tc.verifyEmpty(regexp(head, 'SCALEMX,SCALEMN', 'once'), ...
+    ['The header documents a signature containing SCALEMN, which the body ' ...
+     'does not accept. Either implement it or remove it from the header.']);
+end
+
+function testLyE_W_DocumentsItsUnits(tc)
+% LyE_W accumulates log2 and returns bits; every published reference value is
+% in nats. The factor is ln 2 = 0.693, large enough that a correct answer
+% looks like a 44% error if the convention is not stated.
+here = fileparts(mfilename('fullpath'));
+src = fileread(fullfile(fileparts(fileparts(here)), 'matlab', 'LyE_W.m'));
+head = extractBefore(src, min(strlength(src), 4000));
+tc.verifyNotEmpty(regexp(head, 'BITS|bits per', 'once'), ...
+    ['The header does not state the units of LyE. It returns bits per unit ' ...
+     'time; the literature quotes nats.']);
 end
 
 function testLyE_R_DoesNotArmDebuggerOrOpenFigures(tc)
@@ -256,19 +283,50 @@ tc.verifyEqual(s.figures, 0, 'LyE_R opened a figure in its default form.');
 end
 
 function testLyE_R_MemoryIsNotQuadratic(tc)
-% LyE_R allocates DM = zeros(M-1, M-1):
-%     N =  4000  ->  128 MB
-%     N = 10800  ->  933 MB   (the length in NONAN's own timing note)
-%     N = 20000  ->  3.2 GB
-% Only per-row means of DM are consumed, so the full matrix never needs to
-% exist. A hard ceiling on series length, not a slowdown.
+% Only per-propagation-step means are consumed, so the (M-1)-by-(M-1)
+% distance matrix need never be materialised. Storing it costs 8*(M-1)^2
+% bytes: 0.9 GB at N=10800, 3.2 GB at N=20000. That is a ceiling on series
+% length, not a slowdown.
+%
+% Asserted against the source rather than by measuring peak RSS, which
+% MATLAB does not expose portably. The functional test below confirms the
+% accumulator path still produces a usable curve.
+here = fileparts(mfilename('fullpath'));
+src = fileread(fullfile(fileparts(fileparts(here)), 'matlab', 'LyE_R.m'));
+src = regexprep(src, '\r\n?', newline);
+lines = strsplit(src, newline, 'CollapseDelimiters', false);
+
+bad = {};
+for k = 1:numel(lines)
+    stripped = regexprep(lines{k}, '%.*$', '');
+    if ~isempty(regexp(stripped, 'zeros\s*\(\s*M\s*-\s*1\s*,\s*M\s*-\s*1\s*\)', 'once'))
+        bad{end+1} = sprintf('  line %d: %s', k, strtrim(lines{k})); %#ok<AGROW>
+    end
+end
+tc.verifyEmpty(bad, sprintf( ...
+    ['LyE_R allocates a dense (M-1)-by-(M-1) matrix:\n%s\n' ...
+     'Only per-row means are used. Accumulate a running sum and count per\n' ...
+     'propagation step instead.'], strjoin(bad, newline)));
+end
+
+function testLyE_R_DivergenceCurveIsUsableAtLength(tc)
+% Guards the accumulator path: the curve must still be finite, populated and
+% monotone-ish over its scaling region at a length where the old dense
+% allocation was already 0.3 GB.
 N = 6000;
-M = N - 2*5;
-predicted = (M-1)^2 * 8 / 1e9;
-tc.verifyLessThan(predicted, 0.10, sprintf( ...
-    ['LyE_R would allocate a %.2f GB dense matrix for N = %d. DM is built in\n' ...
-     'full although only row means are used; accumulate sum and count per row.'], ...
-    predicted, N));
+y = nonantest.signals('lorenz', N);
+out = LyE_R(y, 1/0.03, 5, 3);
+tc.verifyEqual(size(out,2), 3, 'LyE_R must return three columns');
+d = out(:,3);
+nz = d(d ~= 0);
+tc.verifyGreaterThan(numel(nz), 100, ...
+    'divergence curve is almost entirely empty');
+tc.verifyTrue(all(isfinite(nz)), ...
+    'divergence curve contains non-finite values');
+[slope, ~, info] = nonantest.scaling_region(d, 1/0.03);
+tc.verifyTrue(info.ok, 'no clean scaling region found at N = 6000');
+tc.verifyGreaterThan(slope, 0, ...
+    sprintf('Lorenz slope came out %.4f; it must be positive', slope));
 end
 
 % ---------------------------------------------------------------- helpers
