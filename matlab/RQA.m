@@ -459,7 +459,6 @@ end
         [perRec, ~, ~, ~] = recurrenceMethod(a,radius);
         while perRec == 0 || perRec > SETVALUE % SETVALUE
             % if radius is too small
-            display('Minimum radius has been adjusted...');
             %             radiusEnd = radius + 0.5;
             if perRec == 0
                 radius = radius*2;
@@ -473,13 +472,11 @@ end
         [perRec, ~, ~, ~] = recurrenceMethod(a,radiusEnd);
         while perRec < SETVALUE
             % if radiusEnd is too large
-            display('Maximum radius has been increased...');
             radiusEnd = radiusEnd*2;
             [perRec, ~, ~, ~] = recurrenceMethod(a,radiusEnd);
         end
         
         % Search for radius with target % recurrence
-        wb = waitbar(0,['Finding radius to give %REC = ',num2str(SETVALUE), ' Please wait...']);    % create wait bar to display progress
         lv = radius;    % set low value
         hv = radiusEnd; % set high value
         target = SETVALUE;  % designate what percent recurrence is wanted
@@ -501,10 +498,8 @@ end
                 lv(i1+1) = lv(i1);
                 hv(i1+1) = mid(i1);
             end
-            waitbar(i1/iter,wb); % update wait bar
         end
         
-        close(wb)
         perRecFinal = perRecIter(end);  % set final percent recurrence
         radiusFinal = rad(end);      % set radius for final percent recurrence
         disp(['% recurrence = ',num2str(perRecFinal),', radius = ',num2str((radiusFinal))])
